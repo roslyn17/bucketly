@@ -5,11 +5,18 @@ import { DIFFICULTY_TIERS } from "@/lib/difficulty";
 import DifficultyBadge from "@/components/DifficultyBadge";
 
 /** Info button + modal explaining how points and levels work, opened from
- * next to the level display. Used both on the dashboard's navy progress
- * band and the public profile's white header card, so the trigger icon's
- * color adapts via `tone` -- the modal panel itself is always a white
- * popup regardless. */
-export default function ScoringInfoModal({ tone = "light" }: { tone?: "light" | "dark" }) {
+ * next to the level display (icon variant) or inline in a sentence, e.g.
+ * the catalog page's subhead (link variant). Used on the dashboard's navy
+ * progress band and the public profile's white header card, so the icon
+ * variant's color also adapts via `tone` -- the modal panel itself is
+ * always a white popup regardless. */
+export default function ScoringInfoModal({
+  tone = "light",
+  variant = "icon",
+}: {
+  tone?: "light" | "dark";
+  variant?: "icon" | "link";
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,10 +24,16 @@ export default function ScoringInfoModal({ tone = "light" }: { tone?: "light" | 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="How scoring works"
-        className={tone === "dark" ? "text-brand-navy-ink hover:text-white" : "text-text-3 hover:text-text-1"}
+        aria-label={variant === "icon" ? "How scoring works" : undefined}
+        className={
+          variant === "link"
+            ? "font-semibold text-brand-teal-ink underline hover:text-brand-teal"
+            : tone === "dark"
+              ? "text-brand-navy-ink hover:text-white"
+              : "text-text-3 hover:text-text-1"
+        }
       >
-        ⓘ
+        {variant === "link" ? "how scoring works" : "ⓘ"}
       </button>
 
       {open && (
