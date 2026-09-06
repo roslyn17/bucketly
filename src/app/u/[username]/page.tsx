@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { DifficultyTier, List, Profile } from "@/lib/types";
-import { POINTS_BY_TIER } from "@/lib/difficulty";
 import { getLevelProgress } from "@/lib/level";
 import { computeProfileStats } from "@/lib/profileStats";
 import AvatarDisplay from "@/components/AvatarDisplay";
-import DifficultyBadge from "@/components/DifficultyBadge";
+import ListIcon from "@/components/ListIcon";
 import ScoringInfoModal from "@/components/ScoringInfoModal";
 import StatTile from "@/components/StatTile";
-import { LIST_EMOJI } from "@/lib/listEmoji";
 import type { DashboardListCard } from "@/components/SortableListGrid";
 
 /**
@@ -42,11 +40,11 @@ export default async function PublicProfilePage({
   if (!profile) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-4 py-20 text-center">
-        <p className="text-lg font-medium text-zinc-900 dark:text-zinc-50">This profile is private</p>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="text-lg font-bold text-text-1">This profile is private</p>
+        <p className="mt-2 text-sm text-text-3">
           Either it doesn&apos;t exist, or the owner hasn&apos;t made it public.
         </p>
-        <Link href="/" className="mt-6 text-sm font-medium text-zinc-900 underline dark:text-zinc-50">
+        <Link href="/" className="mt-6 text-sm font-semibold text-brand-teal-ink underline">
           ← Back home
         </Link>
       </div>
@@ -60,6 +58,7 @@ export default async function PublicProfilePage({
     { data: items, error: itemsError },
     { data: progress, error: progressError },
     { data: listTiers, error: listTiersError },
+    { count: catalogCount },
   ] = await Promise.all([
     supabase
       .from("user_lists")
@@ -70,6 +69,7 @@ export default async function PublicProfilePage({
     supabase.from("list_items").select("id, list_id"),
     supabase.from("user_progress").select("list_item_id").eq("user_id", profile.id).eq("visited", true),
     supabase.from("lists").select("id, difficulty_tier").returns<{ id: string; difficulty_tier: DifficultyTier }[]>(),
+    supabase.from("lists").select("id", { count: "exact", head: true }),
   ]);
 
   const queryError = userListsError ?? itemsError ?? progressError ?? listTiersError;
@@ -95,48 +95,57 @@ export default async function PublicProfilePage({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10">
-      <div className="mb-8 flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
-        <AvatarDisplay avatarUrl={profile.avatar_url} name={displayName} />
+      <div className="mb-8 rounded-[18px] border border-line bg-surface-card p-6 shadow-[var(--shadow-card)]">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4 sm:min-w-0 sm:flex-1">
+            <AvatarDisplay avatarUrl={profile.avatar_url} name={displayName} size={76} />
 
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{displayName}</h1>
-          <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-medium text-zinc-500 sm:justify-start">
-            {level.name}
-            <ScoringInfoModal />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-display text-2xl font-extrabold text-text-1">{displayName}</h1>
+                <span className="rounded-full bg-brand-yellow px-3 py-1 text-xs font-bold tracking-[.04em] text-brand-navy uppercase">
+                  {level.name}
+                </span>
+                <ScoringInfoModal />
+              </div>
+
+              <div className="mt-3 max-w-md">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${progressPct}%`,
+                      background: "linear-gradient(90deg, var(--brand-teal), #8BE0EA)",
+                    }}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-text-3">
+                  {nextLevel
+                    ? `${pointsToNext} pt${pointsToNext === 1 ? "" : "s"} to ${nextLevel.name}`
+                    : "Max level reached!"}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-3 max-w-sm">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-zinc-900 dark:bg-zinc-50"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <p className="mt-1.5 text-xs text-zinc-500">
-              {nextLevel
-                ? `${pointsToNext} pt${pointsToNext === 1 ? "" : "s"} to ${nextLevel.name}`
-                : "Max level reached!"}
-            </p>
+          <div className={`grid gap-3 sm:w-auto sm:shrink-0 ${stats.listsCompleted > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+            <StatTile label="points" value={stats.totalPoints} tone="coral" />
+            <StatTile label="items" value={stats.totalVisited} tone="navy" />
+            {stats.listsCompleted > 0 && <StatTile label="lists done" value={stats.listsCompleted} tone="teal" />}
           </div>
         </div>
       </div>
 
-      <div className={`mb-10 grid gap-4 ${stats.listsCompleted > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
-        <StatTile label="Total points earned" value={stats.totalPoints} />
-        <StatTile label="Items completed" value={stats.totalVisited} />
-        {stats.listsCompleted > 0 && <StatTile label="Lists completed" value={stats.listsCompleted} />}
-      </div>
-
-      <h2 className="mb-8 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="mb-6 font-display text-xl font-extrabold text-text-1">
         {displayName}&apos;s bucket lists
       </h2>
 
       {lists.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500">{displayName} hasn&apos;t added any bucket lists yet.</p>
+        <div className="rounded-[16px] border border-dashed border-line-strong p-10 text-center">
+          <p className="text-sm text-text-3">{displayName} hasn&apos;t added any bucket lists yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {lists.map((list) => {
             const total = itemsByList.get(list.id) ?? 0;
             const visited = visitedByList.get(list.id) ?? 0;
@@ -150,20 +159,25 @@ export default async function PublicProfilePage({
               total,
               pct,
               difficultyTier: list.difficulty_tier,
-              pointsPerItem: POINTS_BY_TIER[list.difficulty_tier],
+              pointsPerItem: 0,
             };
             return <PublicListCard key={card.id} list={card} />;
           })}
         </div>
       )}
 
-      <div className="mt-10 rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">Want to track your own travel bucket list?</p>
+      <div className="mt-10 flex flex-col items-center gap-4 rounded-[18px] bg-brand-navy p-8 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div>
+          <p className="font-display text-xl font-extrabold text-white">Start your own bucket list</p>
+          <p className="mt-1 text-sm text-brand-navy-ink">
+            {catalogCount ?? 0} ready-made lists — national parks, stadiums, films. Free.
+          </p>
+        </div>
         <Link
           href="/signup"
-          className="mt-4 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="shrink-0 rounded-[10px] bg-brand-coral px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-white hover:bg-brand-coral-hover"
         >
-          Start your own list
+          Create my list
         </Link>
       </div>
     </div>
@@ -171,25 +185,26 @@ export default async function PublicProfilePage({
 }
 
 function PublicListCard({ list }: { list: DashboardListCard }) {
+  const completed = list.total > 0 && list.visited === list.total;
   return (
-    <div className="rounded-lg border border-zinc-200 p-5 dark:border-zinc-800">
+    <div className={`rounded-[16px] border p-4 ${completed ? "border-done-border bg-done-bg" : "border-line bg-surface-card"}`}>
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-xl">{LIST_EMOJI[list.slug] ?? "📍"}</span>
-        <h3 className="font-medium text-zinc-900 dark:text-zinc-50">{list.name}</h3>
+        <ListIcon slug={list.slug} size={28} />
+        <h3 className="min-w-0 flex-1 truncate font-display text-sm font-extrabold text-text-1">{list.name}</h3>
+        {completed && <span className="shrink-0 text-brand-teal-ink">✓</span>}
       </div>
 
-      <p className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-zinc-400">
-        <DifficultyBadge tier={list.difficultyTier} />
-        <span>
-          {list.visited * list.pointsPerItem} pts earned · {list.pointsPerItem} pts / item
-        </span>
-      </p>
-
-      <p className="mb-3 text-sm text-zinc-500">
+      <p className="mb-2 text-xs text-text-2">
         {list.visited} / {list.total} {list.actionVerb.toLowerCase()}
       </p>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <div className="h-full rounded-full bg-zinc-900 dark:bg-zinc-50" style={{ width: `${list.pct}%` }} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${list.pct}%`,
+            background: completed ? "var(--brand-teal)" : "linear-gradient(90deg, var(--brand-teal), #8BE0EA)",
+          }}
+        />
       </div>
     </div>
   );
