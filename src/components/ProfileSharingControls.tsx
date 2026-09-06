@@ -121,8 +121,8 @@ export default function ProfileSharingControls({
     const absoluteUrl =
       isPublic && publicPath && typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : null;
     const text = absoluteUrl
-      ? `I'm a ${levelName} with ${totalPoints} points on my travel bucket list! 🧳 Check out my profile: ${absoluteUrl}`
-      : `I'm a ${levelName} with ${totalPoints} points on my travel bucket list! 🧳`;
+      ? `Check out my Travel Bucket List profile 🌍 ${absoluteUrl}`
+      : `Check out my Travel Bucket List profile 🌍`;
 
     try {
       if (navigator.canShare?.({ files: [file] })) {
