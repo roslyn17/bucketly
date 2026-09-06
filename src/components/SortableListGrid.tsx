@@ -86,6 +86,7 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
     setOrderedIds(propIds);
   }
 
+  const [completedCollapsed, setCompletedCollapsed] = useState(false);
   const [, startTransition] = useTransition();
   const byId = new Map(lists.map((l) => [l.id, l]));
 
@@ -138,18 +139,31 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
 
       {completedIds.length > 0 && (
         <>
-          <h3 className="mt-8 mb-4 flex items-center gap-1.5 text-sm font-medium text-zinc-500">
-            <span aria-hidden="true">✅</span> Completed
-          </h3>
-          <SortableContext items={completedIds} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {completedIds.map((id) => {
-                const list = byId.get(id);
-                if (!list) return null;
-                return <SortableListCard key={id} list={list} />;
-              })}
-            </div>
-          </SortableContext>
+          <button
+            type="button"
+            onClick={() => setCompletedCollapsed((collapsed) => !collapsed)}
+            aria-expanded={!completedCollapsed}
+            className="mt-8 mb-4 flex w-full items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          >
+            <span aria-hidden="true">✅</span> Completed ({completedIds.length})
+            <span
+              aria-hidden="true"
+              className={`ml-auto transition-transform ${completedCollapsed ? "-rotate-90" : ""}`}
+            >
+              ▾
+            </span>
+          </button>
+          {!completedCollapsed && (
+            <SortableContext items={completedIds} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {completedIds.map((id) => {
+                  const list = byId.get(id);
+                  if (!list) return null;
+                  return <SortableListCard key={id} list={list} />;
+                })}
+              </div>
+            </SortableContext>
+          )}
         </>
       )}
     </DndContext>
