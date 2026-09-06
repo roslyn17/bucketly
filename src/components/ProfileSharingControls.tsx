@@ -15,6 +15,7 @@ export default function ProfileSharingControls({
   levelName,
   totalPoints,
   totalVisited,
+  totalListsTracked,
 }: {
   initialIsPublic: boolean;
   /** The raw stored display_name -- null if never set. This doubles as the
@@ -24,6 +25,7 @@ export default function ProfileSharingControls({
   levelName: string;
   totalPoints: number;
   totalVisited: number;
+  totalListsTracked: number;
 }) {
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [pending, startTransition] = useTransition();
@@ -86,7 +88,8 @@ export default function ProfileSharingControls({
         levelName,
         totalPoints,
         totalVisited,
-        publicUrl: `travelbucketlist.app${publicPath}`,
+        totalListsTracked,
+        publicUrl: `bucketly.app${publicPath}`,
       });
       setPreview((prev) => {
         if (prev) URL.revokeObjectURL(prev.url);
@@ -108,25 +111,25 @@ export default function ProfileSharingControls({
     if (!preview) return;
     const a = document.createElement("a");
     a.href = preview.url;
-    a.download = "travel-bucket-list-profile.png";
+    a.download = "bucketly-profile.png";
     a.click();
   }
 
   async function handleNativeShare() {
     if (!preview) return;
-    const file = new File([preview.blob], "travel-bucket-list-profile.png", { type: "image/png" });
+    const file = new File([preview.blob], "bucketly-profile.png", { type: "image/png" });
 
     // Only include the link if it'll actually resolve -- a private profile's
     // /u/[name] page just says "this profile is private" right now.
     const absoluteUrl =
       isPublic && publicPath && typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : null;
     const text = absoluteUrl
-      ? `Check out my Travel Bucket List profile 🌍 ${absoluteUrl}`
-      : `Check out my Travel Bucket List profile 🌍`;
+      ? `Check out my Bucketly profile 🌍 ${absoluteUrl}`
+      : `Check out my Bucketly profile 🌍`;
 
     try {
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My Travel Bucket List", text });
+        await navigator.share({ files: [file], title: "My Bucketly profile", text });
       } else {
         handleDownload();
       }
@@ -151,30 +154,39 @@ export default function ProfileSharingControls({
   }
 
   return (
-    <div className="mt-4 flex flex-col items-center gap-2 sm:items-start">
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
-        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            checked={isPublic}
+    <div className="mt-4 flex flex-col items-start gap-2">
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            onClick={handleToggle}
             disabled={pending}
-            onChange={handleToggle}
-            className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
-          />
-          Make my profile public
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+              isPublic ? "bg-brand-teal" : "bg-brand-navy-3"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                isPublic ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+          <span className="text-sm text-brand-navy-ink">Make my profile public</span>
         </label>
         <button
           type="button"
           onClick={handleShare}
           disabled={sharing}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+          className="rounded-[10px] border border-brand-navy-3 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-2 disabled:opacity-50"
         >
           {sharing ? "Generating..." : "Share"}
         </button>
       </div>
 
-      {toggleError && <p className="text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
-      {shareError && <p className="text-xs text-red-600 dark:text-red-400">{shareError}</p>}
+      {toggleError && <p className="text-xs text-red-300">{toggleError}</p>}
+      {shareError && <p className="text-xs text-red-300">{shareError}</p>}
 
       {preview && (
         <div
@@ -182,45 +194,45 @@ export default function ProfileSharingControls({
           onClick={closePreview}
         >
           <div
-            className="flex max-h-full w-full max-w-lg flex-col items-center gap-4 overflow-y-auto rounded-lg bg-white p-4 dark:bg-zinc-900"
+            className="flex max-h-full w-full max-w-lg flex-col items-center gap-4 overflow-y-auto rounded-[20px] bg-surface-card p-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- ephemeral client-generated blob, not a Next-optimizable asset */}
             <img
               src={preview.url}
               alt="Your shareable profile card"
-              className="aspect-square w-full rounded-md object-cover"
+              className="aspect-square w-full rounded-[16px] object-cover"
             />
             <div className="flex w-full flex-wrap justify-center gap-2">
               <button
                 type="button"
                 onClick={handleNativeShare}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="rounded-[10px] bg-brand-coral px-4 py-2 text-sm font-semibold text-white hover:bg-brand-coral-hover"
               >
                 Share
               </button>
               <button
                 type="button"
                 onClick={handleDownload}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="rounded-[10px] border border-line-strong px-4 py-2 text-sm font-semibold text-text-2 hover:bg-surface-sunken"
               >
                 Download
               </button>
               <button
                 type="button"
                 onClick={closePreview}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="rounded-[10px] px-4 py-2 text-sm font-semibold text-text-3 hover:bg-surface-sunken"
               >
                 Close
               </button>
             </div>
 
             {publicPath && (
-              <div className="w-full border-t border-zinc-200 pt-4 dark:border-zinc-800">
+              <div className="w-full border-t border-line pt-4">
                 {isPublic ? (
                   <>
-                    <p className="mb-2 text-center text-xs text-zinc-500">Or share your profile link</p>
-                    <div className="flex w-full gap-2">
+                    <p className="mb-2 text-center text-xs text-text-3">Or share your profile link</p>
+                    <div className="flex w-full gap-2 rounded-[12px] bg-surface-page p-2">
                       <input
                         type="text"
                         readOnly
@@ -228,12 +240,12 @@ export default function ProfileSharingControls({
                           typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : publicPath
                         }
                         onFocus={(e) => e.target.select()}
-                        className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                        className="min-w-0 flex-1 rounded-[10px] border border-line bg-surface-card px-3 py-1.5 text-sm text-text-2"
                       />
                       <button
                         type="button"
                         onClick={handleCopyLink}
-                        className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        className="shrink-0 rounded-[10px] border border-line-strong px-3 py-1.5 text-sm font-semibold text-text-2 hover:bg-surface-card"
                       >
                         {linkCopied ? "Copied!" : "Copy"}
                       </button>
@@ -241,18 +253,18 @@ export default function ProfileSharingControls({
                   </>
                 ) : (
                   <div className="text-center">
-                    <p className="mb-2 text-xs text-zinc-500">
+                    <p className="mb-2 text-xs text-text-3">
                       Your profile is private -- make it public to get a link others can open.
                     </p>
                     <button
                       type="button"
                       onClick={handleToggle}
                       disabled={pending}
-                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                      className="rounded-[10px] border border-line-strong px-3 py-1.5 text-sm font-semibold text-text-2 hover:bg-surface-sunken disabled:opacity-50"
                     >
                       {pending ? "Making public..." : "Make my profile public"}
                     </button>
-                    {toggleError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
+                    {toggleError && <p className="mt-2 text-xs text-red-600">{toggleError}</p>}
                   </div>
                 )}
               </div>

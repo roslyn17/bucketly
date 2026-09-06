@@ -125,6 +125,7 @@ export default async function DashboardPage() {
                 levelName={level.name}
                 totalPoints={stats.totalPoints}
                 totalVisited={stats.totalVisited}
+                totalListsTracked={lists.length}
               />
             </div>
           </div>
