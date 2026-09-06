@@ -72,7 +72,10 @@ export default function ListItemsClient({
   return (
     <div>
       {celebrating && <Confetti onDone={() => setCelebrating(false)} />}
-      {celebrating && (
+      {/* The confetti is one-shot, but the banner itself stays up for as
+          long as the list is actually complete -- not just while the
+          confetti is playing. */}
+      {isComplete && (
         <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-center text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
           🎉 List complete! You&apos;ve checked off everything in {listName}.
         </div>
