@@ -67,11 +67,14 @@ export default function ProfileSharingControls({
   // "Share" generates the card and shows it in a preview overlay -- actually
   // sharing/downloading it is a separate step the user takes from there,
   // rather than firing the OS share sheet (or a silent download) immediately.
+  // Works whether or not the profile is public -- downloading the card
+  // doesn't require anyone else to be able to reach the profile link, only
+  // that there's a name to put on the card.
   async function handleShare() {
     setShareError(null);
 
-    if (!isPublic || !displayName || !publicPath) {
-      setShareError("Make your profile public first -- otherwise the link on the card won't lead anywhere.");
+    if (!displayName || !publicPath) {
+      setShareError("Set a display name above first -- it's used on your card.");
       return;
     }
 
@@ -161,14 +164,6 @@ export default function ProfileSharingControls({
         </button>
       </div>
 
-      {isPublic && publicPath && (
-        <p className="text-xs text-zinc-500">
-          Public at{" "}
-          <a href={publicPath} target="_blank" rel="noopener noreferrer" className="underline">
-            {publicPath}
-          </a>
-        </p>
-      )}
       {toggleError && <p className="text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
       {shareError && <p className="text-xs text-red-600 dark:text-red-400">{shareError}</p>}
 
@@ -213,23 +208,44 @@ export default function ProfileSharingControls({
 
             {publicPath && (
               <div className="w-full border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                <p className="mb-2 text-center text-xs text-zinc-500">Or share your profile link</p>
-                <div className="flex w-full gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : publicPath}
-                    onFocus={(e) => e.target.select()}
-                    className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  >
-                    {linkCopied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
+                {isPublic ? (
+                  <>
+                    <p className="mb-2 text-center text-xs text-zinc-500">Or share your profile link</p>
+                    <div className="flex w-full gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={
+                          typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : publicPath
+                        }
+                        onFocus={(e) => e.target.select()}
+                        className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                      >
+                        {linkCopied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <p className="mb-2 text-xs text-zinc-500">
+                      Your profile is private -- make it public to get a link others can open.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleToggle}
+                      disabled={pending}
+                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                      {pending ? "Making public..." : "Make my profile public"}
+                    </button>
+                    {toggleError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
+                  </div>
+                )}
               </div>
             )}
           </div>
