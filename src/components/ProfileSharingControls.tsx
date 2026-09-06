@@ -198,7 +198,7 @@ export default function ProfileSharingControls({
           onClick={closePreview}
         >
           <div
-            className="flex max-h-full w-full max-w-sm flex-col items-center gap-4 overflow-y-auto rounded-lg bg-white p-4 dark:bg-zinc-900"
+            className="flex max-h-full w-full max-w-lg flex-col items-center gap-4 overflow-y-auto rounded-lg bg-white p-4 dark:bg-zinc-900"
             onClick={(e) => e.stopPropagation()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- ephemeral client-generated blob, not a Next-optimizable asset */}
