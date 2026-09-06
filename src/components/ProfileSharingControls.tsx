@@ -115,9 +115,18 @@ export default function ProfileSharingControls({
   async function handleNativeShare() {
     if (!preview) return;
     const file = new File([preview.blob], "travel-bucket-list-profile.png", { type: "image/png" });
+
+    // Only include the link if it'll actually resolve -- a private profile's
+    // /u/[name] page just says "this profile is private" right now.
+    const absoluteUrl =
+      isPublic && publicPath && typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : null;
+    const text = absoluteUrl
+      ? `I'm a ${levelName} with ${totalPoints} points on my travel bucket list! 🧳 Check out my profile: ${absoluteUrl}`
+      : `I'm a ${levelName} with ${totalPoints} points on my travel bucket list! 🧳`;
+
     try {
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My Travel Bucket List" });
+        await navigator.share({ files: [file], title: "My Travel Bucket List", text });
       } else {
         handleDownload();
       }
