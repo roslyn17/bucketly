@@ -17,7 +17,7 @@ export default function AvatarDisplay({
     return (
       <div
         style={{ width: size, height: size }}
-        className="relative shrink-0 overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-800"
+        className="relative shrink-0 overflow-hidden rounded-full border border-line"
       >
         <Image src={avatarUrl} alt={`${name}'s avatar`} fill sizes={`${size}px`} className="object-cover" unoptimized />
       </div>

@@ -26,6 +26,30 @@ export type ProfileStats = {
  * removing a list preserves progress on it (see listActions.removeList), so
  * a checked-off item on a since-removed list must still count.
  */
+/**
+ * Just the points sum, for contexts that don't need the rest of
+ * ProfileStats (the header's points pill, which -- unlike the dashboard --
+ * has no reason to also fetch user_lists just to compute listsCompleted).
+ * Shared with computeProfileStats below so the accumulation logic can't
+ * drift between the two call sites.
+ */
+export function computeTotalPoints(
+  items: { id: string; list_id: string }[],
+  progress: { list_item_id: string }[],
+  listTiers: { id: string; difficulty_tier: DifficultyTier }[],
+): number {
+  const tierByListId = new Map(listTiers.map((l) => [l.id, l.difficulty_tier]));
+  const itemToList = new Map(items.map((item) => [item.id, item.list_id]));
+
+  let totalPoints = 0;
+  for (const p of progress) {
+    const listId = itemToList.get(p.list_item_id);
+    const tier = listId ? tierByListId.get(listId) : undefined;
+    if (tier) totalPoints += POINTS_BY_TIER[tier];
+  }
+  return totalPoints;
+}
+
 export function computeProfileStats(
   userListRows: { list: Pick<List, "id"> }[],
   items: { id: string; list_id: string }[],
@@ -33,7 +57,6 @@ export function computeProfileStats(
   listTiers: { id: string; difficulty_tier: DifficultyTier }[],
 ): ProfileStats {
   const addedListIds = new Set(userListRows.map((row) => row.list.id));
-  const tierByListId = new Map(listTiers.map((l) => [l.id, l.difficulty_tier]));
 
   const itemsByList = new Map<string, number>();
   const itemToList = new Map<string, string>();
@@ -45,13 +68,9 @@ export function computeProfileStats(
   const visitedItemIds = new Set(progress.map((p) => p.list_item_id));
 
   const visitedByList = new Map<string, number>();
-  let totalPoints = 0;
   for (const itemId of visitedItemIds) {
     const listId = itemToList.get(itemId);
-    if (!listId) continue;
-    visitedByList.set(listId, (visitedByList.get(listId) ?? 0) + 1);
-    const tier = tierByListId.get(listId);
-    if (tier) totalPoints += POINTS_BY_TIER[tier];
+    if (listId) visitedByList.set(listId, (visitedByList.get(listId) ?? 0) + 1);
   }
 
   let listsCompleted = 0;
@@ -63,7 +82,7 @@ export function computeProfileStats(
 
   return {
     totalVisited: visitedItemIds.size,
-    totalPoints,
+    totalPoints: computeTotalPoints(items, progress, listTiers),
     listsCompleted,
   };
 }
