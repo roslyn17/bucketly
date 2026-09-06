@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DIFFICULTY_TIERS } from "@/lib/difficulty";
+import { LEVELS } from "@/lib/level";
 import DifficultyBadge from "@/components/DifficultyBadge";
 
 /** Info button + modal explaining how points and levels work, opened from
@@ -42,7 +43,7 @@ export default function ScoringInfoModal({
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-[16px] border border-line bg-surface-card p-5 shadow-[var(--shadow-card-hover)]"
+            className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-[16px] border border-line bg-surface-card p-5 shadow-[var(--shadow-card-hover)]"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="mb-1 text-sm font-bold text-text-1">How scoring works</p>
@@ -59,6 +60,16 @@ export default function ScoringInfoModal({
                   <span className="font-semibold text-text-1">
                     {points} pt{points === 1 ? "" : "s"}/item
                   </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-4 mb-1 text-xs font-bold tracking-[.08em] text-text-3 uppercase">Levels</p>
+            <ul className="divide-y divide-line text-sm">
+              {LEVELS.map((level) => (
+                <li key={level.name} className="flex items-center justify-between py-1.5">
+                  <span className="font-semibold text-text-1">{level.name}</span>
+                  <span className="text-text-2">{level.minPoints}+ pts</span>
                 </li>
               ))}
             </ul>
