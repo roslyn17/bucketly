@@ -4,33 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 import { updateProfileVisibility } from "@/lib/profileActions";
 import { generateProfileSnapshot } from "@/lib/shareSnapshot";
 
-/**
- * Link-based share targets. These platforms' share intents take a URL (and
- * optional text) via query params -- they don't accept an uploaded file, so
- * they post the public profile link rather than the generated card image.
- * (Attaching the image itself only works through the native OS share sheet,
- * or by downloading the card and attaching it by hand.)
- */
-const SOCIAL_TARGETS = [
-  {
-    name: "X",
-    href: (url: string, text: string) =>
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-  },
-  {
-    name: "Facebook",
-    href: (url: string) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-  },
-  {
-    name: "WhatsApp",
-    href: (url: string, text: string) => `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
-  },
-  {
-    name: "LinkedIn",
-    href: (url: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-  },
-];
-
 /** The "Make my profile public" toggle and the "Share" snapshot button,
  * combined into one component (they live right next to each other, and the
  * Share button needs to know the toggle's current state -- including a
@@ -58,6 +31,7 @@ export default function ProfileSharingControls({
   const [shareError, setShareError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [preview, setPreview] = useState<{ blob: Blob; url: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const publicPath = displayName ? `/u/${encodeURIComponent(displayName)}` : null;
 
@@ -124,6 +98,7 @@ export default function ProfileSharingControls({
 
   function closePreview() {
     setPreview(null);
+    setLinkCopied(false);
   }
 
   function handleDownload() {
@@ -151,11 +126,16 @@ export default function ProfileSharingControls({
     }
   }
 
-  function handleSocialShare(target: (typeof SOCIAL_TARGETS)[number]) {
+  async function handleCopyLink() {
     if (!publicPath) return;
     const absoluteUrl = `${window.location.origin}${publicPath}`;
-    const caption = `I'm a ${levelName} with ${totalPoints} points on my travel bucket list! 🧳`;
-    window.open(target.href(absoluteUrl, caption), "_blank", "noopener,noreferrer,width=600,height=600");
+    try {
+      await navigator.clipboard.writeText(absoluteUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setShareError("Couldn't copy the link. Please try again.");
+    }
   }
 
   return (
@@ -231,25 +211,27 @@ export default function ProfileSharingControls({
               </button>
             </div>
 
-            <div className="w-full border-t border-zinc-200 pt-4 dark:border-zinc-800">
-              <p className="mb-2 text-center text-xs text-zinc-500">Post your profile link to</p>
-              <div className="flex w-full flex-wrap justify-center gap-2">
-                {SOCIAL_TARGETS.map((target) => (
+            {publicPath && (
+              <div className="w-full border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                <p className="mb-2 text-center text-xs text-zinc-500">Or share your profile link</p>
+                <div className="flex w-full gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={typeof window !== "undefined" ? `${window.location.origin}${publicPath}` : publicPath}
+                    onFocus={(e) => e.target.select()}
+                    className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                  />
                   <button
-                    key={target.name}
                     type="button"
-                    onClick={() => handleSocialShare(target)}
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    onClick={handleCopyLink}
+                    className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                   >
-                    {target.name}
+                    {linkCopied ? "Copied!" : "Copy"}
                   </button>
-                ))}
+                </div>
               </div>
-              <p className="mt-2 text-center text-xs text-zinc-400">
-                These share your profile link, not the card image itself -- for the image, use Share above or
-                download it and attach it by hand.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       )}
