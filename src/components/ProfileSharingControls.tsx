@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { updateProfileVisibility } from "@/lib/profileActions";
 import { generateProfileSnapshot } from "@/lib/shareSnapshot";
 
@@ -30,8 +30,18 @@ export default function ProfileSharingControls({
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [preview, setPreview] = useState<{ blob: Blob; url: string } | null>(null);
 
   const publicPath = displayName ? `/u/${encodeURIComponent(displayName)}` : null;
+
+  // The preview holds an object URL -- revoke it once it's no longer shown
+  // (either the card closes or a fresh one replaces it), so blobs don't pile
+  // up across repeated shares.
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview.url);
+    };
+  }, [preview]);
 
   function handleToggle() {
     const next = !isPublic;
@@ -53,6 +63,9 @@ export default function ProfileSharingControls({
     });
   }
 
+  // "Share" generates the card and shows it in a preview overlay -- actually
+  // sharing/downloading it is a separate step the user takes from there,
+  // rather than firing the OS share sheet (or a silent download) immediately.
   async function handleShare() {
     setShareError(null);
 
@@ -71,25 +84,43 @@ export default function ProfileSharingControls({
         totalVisited,
         publicUrl: `travelbucketlist.app${publicPath}`,
       });
-      const file = new File([blob], "travel-bucket-list-profile.png", { type: "image/png" });
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return { blob, url: URL.createObjectURL(blob) };
+      });
+    } catch {
+      setShareError("Couldn't generate the share image. Please try again.");
+    } finally {
+      setSharing(false);
+    }
+  }
 
+  function closePreview() {
+    setPreview(null);
+  }
+
+  function handleDownload() {
+    if (!preview) return;
+    const a = document.createElement("a");
+    a.href = preview.url;
+    a.download = "travel-bucket-list-profile.png";
+    a.click();
+  }
+
+  async function handleNativeShare() {
+    if (!preview) return;
+    const file = new File([preview.blob], "travel-bucket-list-profile.png", { type: "image/png" });
+    try {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "My Travel Bucket List" });
       } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "travel-bucket-list-profile.png";
-        a.click();
-        URL.revokeObjectURL(url);
+        handleDownload();
       }
     } catch (err) {
       // A cancelled share sheet isn't a real failure.
       if (err instanceof Error && err.name !== "AbortError") {
-        setShareError("Couldn't generate the share image. Please try again.");
+        setShareError("Couldn't share the image. Please try again.");
       }
-    } finally {
-      setSharing(false);
     }
   }
 
@@ -126,6 +157,48 @@ export default function ProfileSharingControls({
       )}
       {toggleError && <p className="text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
       {shareError && <p className="text-xs text-red-600 dark:text-red-400">{shareError}</p>}
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={closePreview}
+        >
+          <div
+            className="flex max-h-full w-full max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-4 dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- ephemeral client-generated blob, not a Next-optimizable asset */}
+            <img
+              src={preview.url}
+              alt="Your shareable profile card"
+              className="aspect-square w-full rounded-md object-cover"
+            />
+            <div className="flex w-full flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                Share
+              </button>
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Download
+              </button>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
