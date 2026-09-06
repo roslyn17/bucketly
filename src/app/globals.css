@@ -1,28 +1,76 @@
 @import "tailwindcss";
 
+/* Bucketly brand tokens. Light-only by design -- the mockup is light-only
+   and the app's old dark: variants were only ever half-finished, so this
+   redesign drops dark mode entirely rather than carry that forward (see the
+   Bucketly redesign prompt, section 1: "Dark mode"). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--surface-page);
+  --foreground: var(--text-1);
+
+  --brand-coral: #f2635e;
+  --brand-coral-hover: #e0524d;
+  --brand-teal: #2fc4d6;
+  --brand-teal-ink: #2a9fb0;
+  --brand-yellow: #f9c63c;
+  --brand-navy: #1b2559;
+  --brand-navy-2: #2a3563;
+  --brand-navy-3: #2e3968;
+  --brand-navy-ink: #a6aecf;
+
+  --surface-page: #fbfaf3;
+  --surface-card: #ffffff;
+  --surface-sunken: #f1ede0;
+  --line: #edeae0;
+  --line-strong: #dcd8c8;
+
+  --text-1: #1b2559;
+  --text-2: #4a5273;
+  --text-3: #8189a8;
+  --text-4: #a9a695;
+
+  --done-bg: #f0fbfc;
+  --done-border: #bdeaf0;
+
+  --shadow-card: 0 1px 3px rgba(27, 37, 89, 0.07);
+  --shadow-card-hover: 0 4px 14px rgba(27, 37, 89, 0.07);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-brand-coral: var(--brand-coral);
+  --color-brand-coral-hover: var(--brand-coral-hover);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-teal-ink: var(--brand-teal-ink);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-2: var(--brand-navy-2);
+  --color-brand-navy-3: var(--brand-navy-3);
+  --color-brand-navy-ink: var(--brand-navy-ink);
+
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+
+  --color-done-bg: var(--done-bg);
+  --color-done-border: var(--done-border);
+
+  --font-display: var(--font-nunito);
+  --font-sans: var(--font-dm-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Checking off an item: a quick checkbox pop + a "+N pts" label that floats

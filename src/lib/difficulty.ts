@@ -35,13 +35,14 @@ export const DIFFICULTY_TIER_LABELS = Object.fromEntries(
   DIFFICULTY_TIERS.map(({ tier, label }) => [tier, label]),
 ) as Record<DifficultyTier, string>;
 
-/** tier -> badge color classes, ramping green (easy) to purple (hardest) --
- * see components/DifficultyBadge.tsx, the one place these get applied. */
+/** tier -> badge color classes -- Bucketly's tint set (see the redesign
+ * prompt's brand tokens table), ramping teal (easy) to indigo (hardest).
+ * See components/DifficultyBadge.tsx, the one place these get applied. */
 export const DIFFICULTY_TIER_COLORS: Record<DifficultyTier, string> = {
-  low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  "medium-low": "bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-300",
-  medium: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  "medium-high": "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-  high: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300",
-  "very-high": "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
+  low: "bg-[#E6F8FB] text-[#1E7C8A]",
+  "medium-low": "bg-[#F3F9E2] text-[#5E7A16]",
+  medium: "bg-[#FEF4D6] text-[#8A6A11]",
+  "medium-high": "bg-[#FDEEDC] text-[#9A5A11]",
+  high: "bg-[#FDECEA] text-[#B33B36]",
+  "very-high": "bg-[#EDEBFB] text-[#4A3E9E]",
 };
