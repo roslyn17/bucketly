@@ -42,12 +42,10 @@ export default function ImageCropModal({
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="mb-3 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-          Adjust your photo
-        </p>
+      <div className="w-full max-w-sm rounded-[16px] border border-line bg-surface-card p-4 shadow-[var(--shadow-card-hover)]">
+        <p className="mb-3 text-sm font-bold text-text-1">Adjust your photo</p>
 
-        <div className="relative h-64 w-full overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
+        <div className="relative h-64 w-full overflow-hidden rounded-[10px] bg-surface-sunken">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -61,7 +59,7 @@ export default function ImageCropModal({
           />
         </div>
 
-        <label className="mt-4 flex items-center gap-3 text-xs text-zinc-500">
+        <label className="mt-4 flex items-center gap-3 text-xs text-text-2">
           Zoom
           <input
             type="range"
@@ -74,14 +72,14 @@ export default function ImageCropModal({
           />
         </label>
 
-        {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
 
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-md px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-[10px] px-3 py-1.5 text-sm text-text-2 hover:bg-surface-sunken disabled:opacity-50"
           >
             Cancel
           </button>
@@ -89,7 +87,7 @@ export default function ImageCropModal({
             type="button"
             onClick={handleSave}
             disabled={busy || !croppedAreaPixels}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-[10px] bg-brand-coral px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-coral-hover disabled:opacity-50"
           >
             {busy ? "Saving..." : "Save"}
           </button>

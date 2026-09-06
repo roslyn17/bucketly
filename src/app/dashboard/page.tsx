@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAuthError } from "@/lib/authError";
@@ -10,7 +9,7 @@ import AvatarPicker from "@/components/AvatarPicker";
 import DisplayNameEditor from "@/components/DisplayNameEditor";
 import ScoringInfoModal from "@/components/ScoringInfoModal";
 import ProfileSharingControls from "@/components/ProfileSharingControls";
-import StatTile from "@/components/StatTile";
+import TierLadder from "@/components/TierLadder";
 import SortableListGrid, { type DashboardListCard } from "@/components/SortableListGrid";
 
 export default async function DashboardPage() {
@@ -74,69 +73,73 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10">
-      <div className="mb-8 flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
-        <AvatarPicker initialAvatarUrl={(profile as Profile | null)?.avatar_url ?? null} />
+      <div className="mb-6 rounded-[18px] bg-brand-navy p-6">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4 sm:min-w-0 sm:flex-1">
+            <AvatarPicker initialAvatarUrl={(profile as Profile | null)?.avatar_url ?? null} />
 
-        <div className="flex-1">
-          <DisplayNameEditor
-            initialName={(profile as Profile | null)?.display_name ?? null}
-            fallbackName={user.email?.split("@")[0] || "Explorer"}
-          />
-          <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-medium text-zinc-500 sm:justify-start">
-            {level.name}
-            <ScoringInfoModal />
-          </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <DisplayNameEditor
+                  initialName={(profile as Profile | null)?.display_name ?? null}
+                  fallbackName={user.email?.split("@")[0] || "Explorer"}
+                />
+                <span className="rounded-full bg-brand-yellow px-3 py-1 text-xs font-bold tracking-[.04em] text-brand-navy uppercase">
+                  {level.name}
+                </span>
+                <ScoringInfoModal tone="dark" />
+              </div>
 
-          <div className="mt-3 max-w-sm">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-zinc-900 dark:bg-zinc-50"
-                style={{ width: `${progressPct}%` }}
+              <div className="mt-3 max-w-md">
+                <div className="h-[11px] w-full overflow-hidden rounded-full bg-brand-navy-3">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${progressPct}%`,
+                      background: "linear-gradient(90deg, var(--brand-teal), #8BE0EA)",
+                    }}
+                  />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-xs text-brand-navy-ink">
+                  <span>{stats.totalPoints} pts</span>
+                  {nextLevel ? (
+                    <>
+                      <span>
+                        <span className="font-bold text-brand-yellow">
+                          {pointsToNext} more
+                        </span>{" "}
+                        to {nextLevel.name}
+                      </span>
+                      <span>{nextLevel.minPoints} pts</span>
+                    </>
+                  ) : (
+                    <span className="font-bold text-brand-yellow">Max level reached! 🏆</span>
+                  )}
+                </div>
+              </div>
+
+              <ProfileSharingControls
+                initialIsPublic={(profile as Profile | null)?.is_public ?? false}
+                displayName={(profile as Profile | null)?.display_name ?? null}
+                avatarUrl={(profile as Profile | null)?.avatar_url ?? null}
+                levelName={level.name}
+                totalPoints={stats.totalPoints}
+                totalVisited={stats.totalVisited}
               />
             </div>
-            <p className="mt-1.5 text-xs text-zinc-500">
-              {nextLevel
-                ? `${pointsToNext} pt${pointsToNext === 1 ? "" : "s"} to ${nextLevel.name}`
-                : "Max level reached!"}
-            </p>
           </div>
 
-          <ProfileSharingControls
-            initialIsPublic={(profile as Profile | null)?.is_public ?? false}
-            displayName={(profile as Profile | null)?.display_name ?? null}
-            avatarUrl={(profile as Profile | null)?.avatar_url ?? null}
-            levelName={level.name}
-            totalPoints={stats.totalPoints}
-            totalVisited={stats.totalVisited}
-          />
+          <div className="flex items-center justify-center gap-6 border-t border-brand-navy-3 pt-6 sm:justify-start sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6">
+            <BandStat value={stats.totalVisited} label="items" />
+            <BandStat value={stats.listsCompleted} label="lists done" />
+            <BandStat value={lists.length} label="tracking" />
+          </div>
         </div>
       </div>
 
-      <div className={`mb-10 grid gap-4 ${stats.listsCompleted > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
-        <StatTile label="Total points earned" value={stats.totalPoints} />
-        <StatTile label="Items completed" value={stats.totalVisited} />
-        {stats.listsCompleted > 0 && <StatTile label="Lists completed" value={stats.listsCompleted} />}
+      <div className="mb-6">
+        <TierLadder currentLevelName={level.name} />
       </div>
-
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Your bucket lists
-        </h2>
-        <Link
-          href="/lists/add"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          + Add bucket list
-        </Link>
-      </div>
-
-      {lists.length === 0 && (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500">
-            You haven&apos;t added any bucket lists yet. Click &ldquo;+ Add bucket list&rdquo; above to get started.
-          </p>
-        </div>
-      )}
 
       <SortableListGrid
         lists={lists.map((list): DashboardListCard => {
@@ -156,6 +159,15 @@ export default async function DashboardPage() {
           };
         })}
       />
+    </div>
+  );
+}
+
+function BandStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="text-center">
+      <p className="font-display text-2xl font-extrabold text-white">{value}</p>
+      <p className="text-xs text-brand-navy-ink">{label}</p>
     </div>
   );
 }

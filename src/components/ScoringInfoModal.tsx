@@ -5,8 +5,11 @@ import { DIFFICULTY_TIERS } from "@/lib/difficulty";
 import DifficultyBadge from "@/components/DifficultyBadge";
 
 /** Info button + modal explaining how points and levels work, opened from
- * next to the level display on the dashboard. */
-export default function ScoringInfoModal() {
+ * next to the level display. Used both on the dashboard's navy progress
+ * band and the public profile's white header card, so the trigger icon's
+ * color adapts via `tone` -- the modal panel itself is always a white
+ * popup regardless. */
+export default function ScoringInfoModal({ tone = "light" }: { tone?: "light" | "dark" }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -15,7 +18,7 @@ export default function ScoringInfoModal() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="How scoring works"
-        className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+        className={tone === "dark" ? "text-brand-navy-ink hover:text-white" : "text-text-3 hover:text-text-1"}
       >
         ⓘ
       </button>
@@ -26,23 +29,21 @@ export default function ScoringInfoModal() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+            className="w-full max-w-sm rounded-[16px] border border-line bg-surface-card p-5 shadow-[var(--shadow-card-hover)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="mb-1 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-              How scoring works
-            </p>
-            <p className="mb-4 text-sm text-zinc-500">
+            <p className="mb-1 text-sm font-bold text-text-1">How scoring works</p>
+            <p className="mb-4 text-sm text-text-2">
               Points are earned by completing items — harder or rarer items are worth more,
               from 1 pt (easy) up to 20 pts (very hard). Level up as you rack up points across
               all your bucket lists.
             </p>
 
-            <ul className="divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+            <ul className="divide-y divide-line text-sm">
               {DIFFICULTY_TIERS.map(({ tier, points }) => (
                 <li key={tier} className="flex items-center justify-between py-1.5">
                   <DifficultyBadge tier={tier} />
-                  <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                  <span className="font-semibold text-text-1">
                     {points} pt{points === 1 ? "" : "s"}/item
                   </span>
                 </li>
@@ -52,7 +53,7 @@ export default function ScoringInfoModal() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mt-4 w-full rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="mt-4 w-full rounded-[10px] bg-brand-coral px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-coral-hover"
             >
               Got it
             </button>

@@ -20,7 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { DifficultyTier } from "@/lib/types";
 import DifficultyBadge from "@/components/DifficultyBadge";
-import { LIST_EMOJI } from "@/lib/listEmoji";
+import ListIcon from "@/components/ListIcon";
 import { removeList, reorderLists } from "@/lib/listActions";
 
 export type DashboardListCard = {
@@ -34,19 +34,6 @@ export type DashboardListCard = {
   difficultyTier: DifficultyTier;
   pointsPerItem: number;
 };
-
-function GripIcon() {
-  return (
-    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true">
-      <circle cx="2" cy="2" r="1.5" />
-      <circle cx="8" cy="2" r="1.5" />
-      <circle cx="2" cy="8" r="1.5" />
-      <circle cx="8" cy="8" r="1.5" />
-      <circle cx="2" cy="14" r="1.5" />
-      <circle cx="8" cy="14" r="1.5" />
-    </svg>
-  );
-}
 
 function isListComplete(list: DashboardListCard): boolean {
   return list.total > 0 && list.visited === list.total;
@@ -63,13 +50,16 @@ function reorderWithinGroup(flat: string[], groupIds: string[], oldIndex: number
   return flat.map((id) => (groupSet.has(id) ? reorderedGroup[i++] : id));
 }
 
-/** Drag-and-drop-reorderable grid of the user's bucket list cards, split
- * into "In progress" and "Completed" sections. Order is kept optimistically
- * in local state and persisted via reorderLists -- syncing back to the
- * server-given order only when the *set* of lists changes (add/remove), so
- * a pending drag or in-flight save is never clobbered by an unrelated
- * re-render. Dragging only reorders within a section -- completion is
- * derived from progress, not something a drag should be able to change. */
+/**
+ * Owns the whole "Your bucket lists" section: the heading, the
+ * in-progress/completed segmented control, the "+ Add bucket list" button,
+ * and the drag-and-drop-reorderable card grid itself. Order is kept
+ * optimistically in local state and persisted via reorderLists -- syncing
+ * back to the server-given order only when the *set* of lists changes
+ * (add/remove), so a pending drag or in-flight save is never clobbered by
+ * an unrelated re-render. Dragging only reorders within a section --
+ * completion is derived from progress, not something a drag should change.
+ */
 export default function SortableListGrid({ lists }: { lists: DashboardListCard[] }) {
   const propIds = lists.map((l) => l.id);
   // Only the *set* of ids -- order-independent -- so a pure reorder's
@@ -86,7 +76,7 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
     setOrderedIds(propIds);
   }
 
-  const [completedCollapsed, setCompletedCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"in-progress" | "completed">("in-progress");
   const [, startTransition] = useTransition();
   const byId = new Map(lists.map((l) => [l.id, l]));
 
@@ -125,48 +115,118 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
     });
   }
 
-  return (
-    <DndContext id="dashboard-lists" sensors={sensors} onDragEnd={handleDragEnd}>
-      <SortableContext items={inProgressIds} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {inProgressIds.map((id) => {
-            const list = byId.get(id);
-            if (!list) return null;
-            return <SortableListCard key={id} list={list} />;
-          })}
-        </div>
-      </SortableContext>
+  const addButton = (
+    <Link
+      href="/lists/add"
+      className="rounded-[10px] bg-brand-coral px-4 py-2 text-sm font-semibold whitespace-nowrap text-white hover:bg-brand-coral-hover"
+    >
+      + Add bucket list
+    </Link>
+  );
 
-      {completedIds.length > 0 && (
-        <>
-          <button
-            type="button"
-            onClick={() => setCompletedCollapsed((collapsed) => !collapsed)}
-            aria-expanded={!completedCollapsed}
-            className="mt-8 mb-4 flex w-full items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-          >
-            <span aria-hidden="true">✅</span> Completed ({completedIds.length})
-            <span
-              aria-hidden="true"
-              className={`ml-auto transition-transform ${completedCollapsed ? "-rotate-90" : ""}`}
+  if (lists.length === 0) {
+    return (
+      <div>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="font-display text-xl font-extrabold text-text-1">Your bucket lists</h2>
+          {addButton}
+        </div>
+        <div className="rounded-[16px] border border-dashed border-line-strong p-10 text-center">
+          <p className="text-sm text-text-2">
+            You haven&apos;t added any bucket lists yet. Click &ldquo;+ Add bucket list&rdquo; above to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <h2 className="font-display text-xl font-extrabold text-text-1">Your bucket lists</h2>
+          <div className="flex gap-1 rounded-full bg-surface-sunken p-1 text-sm font-semibold">
+            <button
+              type="button"
+              onClick={() => setActiveTab("in-progress")}
+              className={`rounded-full px-3 py-1 transition-colors ${
+                activeTab === "in-progress" ? "bg-surface-card text-text-1 shadow-[var(--shadow-card)]" : "text-text-3"
+              }`}
             >
-              ▾
-            </span>
-          </button>
-          {!completedCollapsed && (
-            <SortableContext items={completedIds} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {completedIds.map((id) => {
-                  const list = byId.get(id);
-                  if (!list) return null;
-                  return <SortableListCard key={id} list={list} />;
-                })}
-              </div>
-            </SortableContext>
-          )}
-        </>
-      )}
-    </DndContext>
+              In progress {inProgressIds.length}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("completed")}
+              className={`rounded-full px-3 py-1 transition-colors ${
+                activeTab === "completed" ? "bg-surface-card text-text-1 shadow-[var(--shadow-card)]" : "text-text-3"
+              }`}
+            >
+              Completed {completedIds.length}
+            </button>
+          </div>
+        </div>
+        {addButton}
+      </div>
+
+      <DndContext id="dashboard-lists" sensors={sensors} onDragEnd={handleDragEnd}>
+        <SortableContext items={inProgressIds} strategy={rectSortingStrategy}>
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${activeTab === "in-progress" ? "" : "hidden"}`}>
+            {inProgressIds.length === 0 ? (
+              <p className="col-span-full text-sm text-text-3">
+                Nothing in progress -- everything you&apos;re tracking is done!
+              </p>
+            ) : (
+              inProgressIds.map((id) => {
+                const list = byId.get(id);
+                if (!list) return null;
+                return <SortableListCard key={id} list={list} />;
+              })
+            )}
+          </div>
+        </SortableContext>
+
+        <SortableContext items={completedIds} strategy={rectSortingStrategy}>
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${activeTab === "completed" ? "" : "hidden"}`}>
+            {completedIds.length === 0 ? (
+              <p className="col-span-full text-sm text-text-3">No completed lists yet -- keep checking things off!</p>
+            ) : (
+              completedIds.map((id) => {
+                const list = byId.get(id);
+                if (!list) return null;
+                return <SortableListCard key={id} list={list} />;
+              })
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+function ProgressRing({ pct }: { pct: number }) {
+  return (
+    <div
+      className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full"
+      style={{ background: `conic-gradient(var(--brand-teal) 0 ${pct}%, var(--surface-sunken) ${pct}% 100%)` }}
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-card text-sm font-bold text-text-1">
+        {pct}%
+      </div>
+    </div>
+  );
+}
+
+function GripIcon() {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true">
+      <circle cx="2" cy="2" r="1.5" />
+      <circle cx="8" cy="2" r="1.5" />
+      <circle cx="2" cy="8" r="1.5" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="2" cy="14" r="1.5" />
+      <circle cx="8" cy="14" r="1.5" />
+    </svg>
   );
 }
 
@@ -186,61 +246,64 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border p-5 transition-colors ${
+      className={`group relative flex items-center gap-4 rounded-[16px] border p-[18px] transition-colors ${
         completed
-          ? "border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:border-emerald-700"
-          : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+          ? "border-done-border bg-done-bg"
+          : "border-line bg-surface-card hover:border-brand-teal hover:shadow-[var(--shadow-card-hover)]"
       } ${isDragging ? "z-10 opacity-70" : ""}`}
     >
-      <div className="mb-2 flex items-center gap-2">
-        <span className="text-xl">{LIST_EMOJI[list.slug] ?? "📍"}</span>
-        <h2 className="mr-auto font-medium text-zinc-900 dark:text-zinc-50">{list.name}</h2>
-        {completed && (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-            ✓ Done
-          </span>
-        )}
-        {/* Drag listeners live only on this handle -- not the whole card --
-            so clicking the card to open the list (or the Remove link) isn't
-            fighting the sortable's pointer-down handling. */}
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={`Drag ${list.name} to reorder`}
-          className="shrink-0 cursor-grab touch-none rounded p-1 text-zinc-300 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:text-zinc-400"
-        >
-          <GripIcon />
-        </button>
-      </div>
-
-      <p className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-zinc-400">
-        <DifficultyBadge tier={list.difficultyTier} />
-        <span>
-          {list.visited * list.pointsPerItem} pts earned · {list.pointsPerItem} pts / item
-        </span>
-      </p>
-
-      <Link href={`/lists/${list.slug}`} className="block">
-        <p className="mb-3 text-sm text-zinc-500">
-          {list.visited} / {list.total} {list.actionVerb.toLowerCase()}
-        </p>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-          <div
-            className={`h-full rounded-full ${completed ? "bg-emerald-500 dark:bg-emerald-500" : "bg-zinc-900 dark:bg-zinc-50"}`}
-            style={{ width: `${list.pct}%` }}
-          />
-        </div>
-      </Link>
-
+      {/* Drag listeners live only on this handle -- not the whole card --
+          so clicking the card to open the list (or hitting Remove) isn't
+          fighting the sortable's pointer-down handling. */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={`Drag ${list.name} to reorder`}
+        className="absolute top-3 right-3 cursor-grab touch-none rounded p-1 text-line-strong hover:text-brand-coral active:cursor-grabbing"
+      >
+        <GripIcon />
+      </button>
+      {/* Kept out of the header row (it used to compete with the progress
+          info for attention) -- only appears on hover, near the handle. */}
       <button
         type="button"
         disabled={isPending}
         onClick={() => startTransition(() => removeList(list.id, list.slug))}
-        className="mt-3 text-xs text-zinc-400 underline hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
+        className="absolute top-9 right-3 text-[11px] text-text-3 opacity-0 underline transition-opacity hover:text-brand-coral disabled:opacity-50 group-hover:opacity-100"
       >
         Remove
       </button>
+
+      <ProgressRing pct={list.pct} />
+
+      <div className="min-w-0 flex-1 pr-6">
+        <div className="mb-1 flex items-center gap-2">
+          <ListIcon slug={list.slug} size={28} />
+          <h3 className="truncate font-display text-base font-extrabold text-text-1">{list.name}</h3>
+          {completed && (
+            <span className="ml-auto shrink-0 rounded-full bg-done-bg px-2 py-0.5 text-[11px] font-bold text-brand-teal-ink">
+              ✓ Done
+            </span>
+          )}
+        </div>
+
+        <p className="mb-2 truncate text-sm text-text-2">
+          {list.visited} of {list.total} {list.actionVerb.toLowerCase()} ·{" "}
+          <span className="font-semibold text-[#8A6A11]">{list.visited * list.pointsPerItem} pts</span>
+        </p>
+
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <DifficultyBadge tier={list.difficultyTier} />
+          <span className="text-xs text-text-3">{list.pointsPerItem} pts / item</span>
+          <Link
+            href={`/lists/${list.slug}`}
+            className="ml-auto shrink-0 text-xs font-semibold text-brand-teal-ink hover:underline"
+          >
+            Continue →
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

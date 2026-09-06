@@ -87,10 +87,10 @@ export default function AvatarPicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900"
+        className="group relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-full border border-white/20 bg-brand-navy-2"
       >
         {avatarUrl ? (
-          <Image src={avatarUrl} alt="Your avatar" fill sizes="80px" className="object-cover" unoptimized />
+          <Image src={avatarUrl} alt="Your avatar" fill sizes="76px" className="object-cover" unoptimized />
         ) : (
           <DefaultAvatarIcon />
         )}
@@ -108,13 +108,13 @@ export default function AvatarPicker({
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute z-20 mt-2 w-72 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">Upload a photo</p>
+          <div className="absolute z-20 mt-2 w-72 rounded-[10px] border border-line bg-surface-card p-4 shadow-[var(--shadow-card-hover)]">
+            <p className="mb-2 text-xs font-bold tracking-wide text-text-3 uppercase">Upload a photo</p>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={busy}
-              className="mb-4 w-full rounded-md border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="mb-4 w-full rounded-[10px] border border-dashed border-line-strong px-3 py-2 text-sm text-text-2 hover:bg-surface-sunken disabled:opacity-50"
             >
               Choose an image...
             </button>
@@ -126,7 +126,7 @@ export default function AvatarPicker({
               className="hidden"
             />
 
-            <p className="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">Or pick one</p>
+            <p className="mb-2 text-xs font-bold tracking-wide text-text-3 uppercase">Or pick one</p>
             <div className="grid grid-cols-4 gap-2">
               {PRESET_AVATARS.map((preset) => (
                 <button
@@ -135,14 +135,14 @@ export default function AvatarPicker({
                   onClick={() => handlePresetSelect(preset.url)}
                   disabled={busy}
                   title={preset.name}
-                  className="overflow-hidden rounded-full border border-zinc-200 hover:border-zinc-400 disabled:opacity-50 dark:border-zinc-800 dark:hover:border-zinc-600"
+                  className="overflow-hidden rounded-full border border-line hover:border-line-strong disabled:opacity-50"
                 >
                   <Image src={preset.url} alt={preset.name} width={48} height={48} />
                 </button>
               ))}
             </div>
 
-            {error && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
           </div>
         </>
       )}
@@ -156,7 +156,7 @@ export default function AvatarPicker({
 
 function DefaultAvatarIcon() {
   return (
-    <svg viewBox="0 0 80 80" className="h-full w-full text-zinc-400 dark:text-zinc-600" fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 80 80" className="h-full w-full text-brand-navy-ink" fill="currentColor" aria-hidden="true">
       <circle cx="40" cy="30" r="14" />
       <path d="M12 72c0-15.5 12.5-26 28-26s28 10.5 28 26" />
     </svg>
