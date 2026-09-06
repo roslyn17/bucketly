@@ -1,19 +1,63 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ItemWithProgress } from "@/lib/types";
+import Confetti from "@/components/Confetti";
 import ItemRow from "./ItemRow";
 
 export default function ListItemsClient({
   listSlug,
+  listName,
   items,
   pointsPerItem,
 }: {
   listSlug: string;
+  listName: string;
   items: ItemWithProgress[];
   pointsPerItem: number;
 }) {
   const [query, setQuery] = useState("");
+
+  // Tracked independently of each ItemRow's own local state so this
+  // component can tell when the *last* item gets checked off, regardless of
+  // which row it was. ItemRow reports each toggle via onToggle below, which
+  // keeps this in sync optimistically -- but "Reset progress" clears
+  // everyone's progress server-side without going through onToggle at all,
+  // so this also has to resync whenever the server's own visited set (via
+  // the revalidated `items` prop) disagrees with what we're holding, the
+  // same during-render-adjustment pattern SortableListGrid uses for order.
+  const visitedKey = items
+    .filter(({ progress }) => progress?.visited)
+    .map(({ item }) => item.id)
+    .sort()
+    .join(",");
+  const [visitedIds, setVisitedIds] = useState(() => new Set(visitedKey ? visitedKey.split(",") : []));
+  const [lastVisitedKey, setLastVisitedKey] = useState(visitedKey);
+  if (visitedKey !== lastVisitedKey) {
+    setLastVisitedKey(visitedKey);
+    setVisitedIds(new Set(visitedKey ? visitedKey.split(",") : []));
+  }
+
+  const [celebrating, setCelebrating] = useState(false);
+  const total = items.length;
+  const isComplete = total > 0 && visitedIds.size === total;
+  // Starts at whatever the initial load's completion state is, so landing
+  // on an already-complete list doesn't immediately fire the celebration.
+  const wasComplete = useRef(isComplete);
+
+  useEffect(() => {
+    if (isComplete && !wasComplete.current) setCelebrating(true);
+    wasComplete.current = isComplete;
+  }, [isComplete]);
+
+  function handleToggle(itemId: string, visited: boolean) {
+    setVisitedIds((prev) => {
+      const next = new Set(prev);
+      if (visited) next.add(itemId);
+      else next.delete(itemId);
+      return next;
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -27,6 +71,12 @@ export default function ListItemsClient({
 
   return (
     <div>
+      {celebrating && <Confetti onDone={() => setCelebrating(false)} />}
+      {celebrating && (
+        <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-center text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+          🎉 List complete! You&apos;ve checked off everything in {listName}.
+        </div>
+      )}
       <input
         type="search"
         placeholder="Search..."
@@ -45,6 +95,7 @@ export default function ListItemsClient({
             item={item}
             initialProgress={progress}
             points={pointsPerItem}
+            onToggle={handleToggle}
           />
         ))}
         {filtered.length === 0 && (

@@ -16,11 +16,15 @@ export default function ItemRow({
   item,
   initialProgress,
   points,
+  onToggle,
 }: {
   listSlug: string;
   item: ListItem;
   initialProgress: UserProgress | null;
   points: number;
+  /** Reports a check/uncheck up to the list so it can tell when every item
+   * is visited (see ListItemsClient's completion celebration). */
+  onToggle?: (itemId: string, visited: boolean) => void;
 }) {
   const [progress, setProgress] = useState(initialProgress);
   const [editingDate, setEditingDate] = useState(false);
@@ -29,6 +33,9 @@ export default function ItemRow({
   const [month, setMonth] = useState(initialFields.month);
   const [day, setDay] = useState(initialFields.day);
   const [isPending, startTransition] = useTransition();
+  // Bumped on every check (not uncheck) to re-trigger the pop/points CSS
+  // animations -- changing `key` on the animated elements restarts them.
+  const [checkEffect, setCheckEffect] = useState(0);
 
   const visited = progress?.visited ?? false;
   const savedDateLabel =
@@ -37,6 +44,8 @@ export default function ItemRow({
       : null;
 
   function toggleVisited(next: boolean) {
+    if (next) setCheckEffect((n) => n + 1);
+    onToggle?.(item.id, next);
     startTransition(async () => {
       await setVisited(item.id, listSlug, next);
       setProgress((prev) =>
@@ -84,13 +93,25 @@ export default function ItemRow({
   return (
     <li className="py-3">
       <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          checked={visited}
-          disabled={isPending}
-          onChange={(e) => toggleVisited(e.target.checked)}
-          className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
-        />
+        <div className="relative shrink-0">
+          <input
+            key={checkEffect}
+            type="checkbox"
+            checked={visited}
+            disabled={isPending}
+            onChange={(e) => toggleVisited(e.target.checked)}
+            className={`h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 ${checkEffect > 0 && visited ? "checkbox-pop" : ""}`}
+          />
+          {checkEffect > 0 && visited && (
+            <span
+              key={checkEffect}
+              aria-hidden="true"
+              className="points-pop pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+            >
+              +{points}
+            </span>
+          )}
+        </div>
         <div className="flex-1">
           {item.metadata?.team ? (
             <>

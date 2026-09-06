@@ -90,6 +90,7 @@ export default async function ListPage({
 
       <ListItemsClient
         listSlug={list.slug}
+        listName={list.name}
         items={itemsWithProgress}
         pointsPerItem={POINTS_BY_TIER[list.difficulty_tier]}
       />
