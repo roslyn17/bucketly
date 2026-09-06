@@ -95,7 +95,7 @@ export default function ItemRow({
       <div className="flex items-center gap-3">
         <div className="relative shrink-0">
           <input
-            key={checkEffect}
+            key={`checkbox-${checkEffect}`}
             type="checkbox"
             checked={visited}
             disabled={isPending}
@@ -104,7 +104,7 @@ export default function ItemRow({
           />
           {checkEffect > 0 && visited && (
             <span
-              key={checkEffect}
+              key={`points-${checkEffect}`}
               aria-hidden="true"
               className="points-pop pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
             >

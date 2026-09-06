@@ -35,6 +35,19 @@ export type DashboardListCard = {
   pointsPerItem: number;
 };
 
+function GripIcon() {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true">
+      <circle cx="2" cy="2" r="1.5" />
+      <circle cx="8" cy="2" r="1.5" />
+      <circle cx="2" cy="8" r="1.5" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="2" cy="14" r="1.5" />
+      <circle cx="8" cy="14" r="1.5" />
+    </svg>
+  );
+}
+
 function isListComplete(list: DashboardListCard): boolean {
   return list.total > 0 && list.visited === list.total;
 }
@@ -159,10 +172,7 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      aria-label={`${list.name}, draggable to reorder`}
-      className={`touch-none cursor-grab rounded-lg border p-5 transition-colors active:cursor-grabbing ${
+      className={`rounded-lg border p-5 transition-colors ${
         completed
           ? "border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:border-emerald-700"
           : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
@@ -170,12 +180,24 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="text-xl">{LIST_EMOJI[list.slug] ?? "📍"}</span>
-        <h2 className="font-medium text-zinc-900 dark:text-zinc-50">{list.name}</h2>
+        <h2 className="mr-auto font-medium text-zinc-900 dark:text-zinc-50">{list.name}</h2>
         {completed && (
-          <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
             ✓ Done
           </span>
         )}
+        {/* Drag listeners live only on this handle -- not the whole card --
+            so clicking the card to open the list (or the Remove link) isn't
+            fighting the sortable's pointer-down handling. */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag ${list.name} to reorder`}
+          className="shrink-0 cursor-grab touch-none rounded p-1 text-zinc-300 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:text-zinc-400"
+        >
+          <GripIcon />
+        </button>
       </div>
 
       <p className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-zinc-400">
