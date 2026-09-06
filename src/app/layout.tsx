@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Nunito } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import HeaderVisibility from "@/components/HeaderVisibility";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${nunito.variable} ${dmSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-surface-page font-sans">
-        <Header />
+        <HeaderVisibility header={<Header />} />
         <div className="flex flex-1 flex-col">{children}</div>
       </body>
     </html>
