@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { ItemWithProgress, List, ListItem, UserProgress } from "@/lib/types";
 import { POINTS_BY_TIER } from "@/lib/difficulty";
 import { addList } from "@/lib/listActions";
+import DifficultyBadge from "@/components/DifficultyBadge";
+import ListIcon from "@/components/ListIcon";
 import ListItemsClient from "./ListItemsClient";
-import ResetListButton from "./ResetListButton";
 
 export default async function ListPage({
   params,
@@ -54,24 +55,47 @@ export default async function ListPage({
   }));
 
   const visitedCount = itemsWithProgress.filter((i) => i.progress?.visited).length;
+  const pointsPerItem = POINTS_BY_TIER[list.difficulty_tier];
+  const pct = itemsWithProgress.length > 0 ? Math.round((visitedCount / itemsWithProgress.length) * 100) : 0;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10">
-      <Link href="/dashboard" className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50">
-        ← All lists
+      <Link href="/dashboard" className="mb-4 inline-block text-sm text-text-3 hover:text-text-1">
+        ← Your bucket lists
       </Link>
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{list.name}</h1>
-      <div className="mt-1 mb-6 flex items-center justify-between">
-        <p className="text-sm text-zinc-500">
-          {visitedCount} / {itemsWithProgress.length} {list.action_verb.toLowerCase()}
-          <span className="text-zinc-400"> · {POINTS_BY_TIER[list.difficulty_tier]} pts each</span>
-        </p>
-        {visitedCount > 0 && <ResetListButton listId={list.id} listSlug={list.slug} />}
+
+      <div className="mb-4 rounded-[18px] border border-line bg-surface-card p-6 shadow-[var(--shadow-card)]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <ListIcon slug={list.slug} size={52} />
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-2xl font-extrabold text-text-1">{list.name}</h1>
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm whitespace-nowrap text-text-2">
+                <DifficultyBadge tier={list.difficulty_tier} />
+                <span>
+                  {pointsPerItem} pts / item · {visitedCount} of {itemsWithProgress.length}{" "}
+                  {list.action_verb.toLowerCase()}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="font-display text-2xl font-extrabold text-brand-coral">{visitedCount * pointsPerItem}</p>
+            <p className="text-xs text-text-3">pts from this list</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6 h-3 w-full overflow-hidden rounded-full bg-surface-sunken">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--brand-teal), #8BE0EA)" }}
+        />
       </div>
 
       {!isAdded && (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
-          <p className="text-sm text-zinc-500">This list isn&apos;t on your dashboard yet.</p>
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-[16px] border border-dashed border-line-strong p-4">
+          <p className="text-sm text-text-2">This list isn&apos;t on your dashboard yet.</p>
           <form
             action={async () => {
               "use server";
@@ -80,7 +104,7 @@ export default async function ListPage({
           >
             <button
               type="submit"
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium whitespace-nowrap text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="rounded-[10px] bg-brand-coral px-4 py-2 text-sm font-semibold whitespace-nowrap text-white hover:bg-brand-coral-hover"
             >
               + Add to my lists
             </button>
@@ -89,10 +113,11 @@ export default async function ListPage({
       )}
 
       <ListItemsClient
+        listId={list.id}
         listSlug={list.slug}
         listName={list.name}
         items={itemsWithProgress}
-        pointsPerItem={POINTS_BY_TIER[list.difficulty_tier]}
+        pointsPerItem={pointsPerItem}
       />
     </div>
   );

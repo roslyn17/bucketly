@@ -21,7 +21,7 @@ export default function ResetListButton({ listId, listSlug }: { listId: string; 
       type="button"
       onClick={handleReset}
       disabled={isPending}
-      className="text-xs text-zinc-400 underline hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
+      className="shrink-0 rounded-[12px] border border-line-strong px-4 py-2 text-sm font-semibold whitespace-nowrap text-text-2 hover:bg-surface-sunken disabled:opacity-50"
     >
       {isPending ? "Resetting..." : "Reset progress"}
     </button>

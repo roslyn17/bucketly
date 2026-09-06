@@ -91,58 +91,77 @@ export default function ItemRow({
   }
 
   return (
-    <li className="py-3">
+    <li
+      onClick={() => !isPending && toggleVisited(!visited)}
+      className="cursor-pointer px-4 py-3.5 transition-colors hover:bg-surface-page"
+    >
       <div className="flex items-center gap-3">
-        <div className="relative shrink-0">
-          <input
-            key={`checkbox-${checkEffect}`}
-            type="checkbox"
-            checked={visited}
-            disabled={isPending}
-            onChange={(e) => toggleVisited(e.target.checked)}
-            className={`h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 ${checkEffect > 0 && visited ? "checkbox-pop" : ""}`}
-          />
+        <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+          <label className="relative flex h-[23px] w-[23px] cursor-pointer items-center justify-center">
+            <input
+              key={checkEffect}
+              type="checkbox"
+              checked={visited}
+              disabled={isPending}
+              onChange={(e) => toggleVisited(e.target.checked)}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+            <span
+              className={`pointer-events-none flex h-full w-full items-center justify-center rounded-[7px] border-2 ${
+                visited ? "border-brand-teal bg-brand-teal" : "border-line-strong bg-white"
+              } ${checkEffect > 0 && visited ? "checkbox-pop" : ""}`}
+            >
+              {visited && (
+                <svg width="13" height="10" viewBox="0 0 13 10" fill="none" aria-hidden="true">
+                  <path d="M1 5L4.5 8.5L12 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </span>
+          </label>
           {checkEffect > 0 && visited && (
             <span
-              key={`points-${checkEffect}`}
+              key={checkEffect}
               aria-hidden="true"
-              className="points-pop pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+              className="points-pop pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 text-xs font-bold text-brand-coral"
             >
               +{points}
             </span>
           )}
         </div>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           {item.metadata?.team ? (
             <>
-              <div className={visited ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-700 dark:text-zinc-300"}>
+              <div className="text-sm font-semibold text-text-1">
                 {item.metadata.team} — {item.name}
-                <span className="ml-2 text-xs text-zinc-400">
+                <span className="ml-2 text-xs font-normal text-text-3">
                   {points} pt{points === 1 ? "" : "s"}
                 </span>
               </div>
-              {item.metadata.city && (
-                <div className="text-xs text-zinc-400">{item.metadata.city}</div>
-              )}
+              {item.metadata.city && <div className="text-xs text-text-3">{item.metadata.city}</div>}
             </>
           ) : (
-            <span className={visited ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-700 dark:text-zinc-300"}>
+            <div className="text-sm font-semibold text-text-1">
               {item.name}
               {(item.metadata?.state ?? item.metadata?.location) && (
-                <span className="ml-2 text-xs text-zinc-400">
+                <span className="ml-2 text-xs font-normal text-text-3">
                   {item.metadata.state ?? item.metadata.location}
                 </span>
               )}
-              <span className="ml-2 text-xs text-zinc-400">
+              <span className="ml-2 text-xs font-normal text-text-3">
                 {points} pt{points === 1 ? "" : "s"}
               </span>
-            </span>
+            </div>
           )}
         </div>
         {visited && !editingDate && (
           <button
-            onClick={() => setEditingDate(true)}
-            className="text-xs text-zinc-500 underline hover:text-zinc-900 dark:hover:text-zinc-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingDate(true);
+            }}
+            className={`shrink-0 text-xs underline ${
+              savedDateLabel ? "font-semibold text-brand-teal-ink" : "text-text-3 hover:text-text-1"
+            }`}
           >
             {savedDateLabel ?? "Add date"}
           </button>
@@ -150,7 +169,10 @@ export default function ItemRow({
       </div>
 
       {visited && editingDate && (
-        <div className="mt-2 ml-7 flex flex-wrap items-center gap-2">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="mt-2 ml-9 flex flex-wrap items-center gap-2"
+        >
           <input
             type="number"
             placeholder="Year"
@@ -158,7 +180,7 @@ export default function ItemRow({
             min={1900}
             max={CURRENT_YEAR}
             onChange={(e) => setYear(e.target.value)}
-            className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-20 rounded-[10px] border border-line px-2 py-1 text-xs text-text-1"
           />
           <select
             value={month}
@@ -166,7 +188,7 @@ export default function ItemRow({
               setMonth(e.target.value);
               if (!e.target.value) setDay("");
             }}
-            className="rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-[10px] border border-line px-2 py-1 text-xs text-text-1"
           >
             <option value="">Month (optional)</option>
             {MONTH_NAMES.map((name, i) => (
@@ -183,29 +205,22 @@ export default function ItemRow({
             max={31}
             disabled={!month}
             onChange={(e) => setDay(e.target.value)}
-            className="w-16 rounded-md border border-zinc-300 px-2 py-1 text-xs disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-16 rounded-[10px] border border-line px-2 py-1 text-xs text-text-1 disabled:opacity-50"
           />
 
           <button
             onClick={saveDate}
             disabled={isPending || !year}
-            className="rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
+            className="rounded-[10px] bg-brand-coral px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
           >
             Save
           </button>
           {progress?.visited_on && (
-            <button
-              onClick={clearDate}
-              disabled={isPending}
-              className="text-xs text-zinc-500 underline hover:text-zinc-900 dark:hover:text-zinc-50"
-            >
+            <button onClick={clearDate} disabled={isPending} className="text-xs text-text-3 underline hover:text-text-1">
               Clear
             </button>
           )}
-          <button
-            onClick={() => setEditingDate(false)}
-            className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50"
-          >
+          <button onClick={() => setEditingDate(false)} className="text-xs text-text-3 hover:text-text-1">
             Cancel
           </button>
         </div>

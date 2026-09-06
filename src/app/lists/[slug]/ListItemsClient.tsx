@@ -3,14 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ItemWithProgress } from "@/lib/types";
 import Confetti from "@/components/Confetti";
+import ResetListButton from "./ResetListButton";
 import ItemRow from "./ItemRow";
 
 export default function ListItemsClient({
+  listId,
   listSlug,
   listName,
   items,
   pointsPerItem,
 }: {
+  listId: string;
   listSlug: string;
   listName: string;
   items: ItemWithProgress[];
@@ -72,22 +75,24 @@ export default function ListItemsClient({
   return (
     <div>
       {celebrating && <Confetti onDone={() => setCelebrating(false)} />}
-      {/* The confetti is one-shot, but the banner itself stays up for as
-          long as the list is actually complete -- not just while the
-          confetti is playing. */}
-      {isComplete && (
-        <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-center text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+      {celebrating && (
+        <div className="mb-4 rounded-[16px] border border-done-border bg-done-bg p-4 text-center text-sm font-semibold text-brand-navy">
           🎉 List complete! You&apos;ve checked off everything in {listName}.
         </div>
       )}
-      <input
-        type="search"
-        placeholder="Search..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="mb-4 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-      />
-      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+
+      <div className="mb-4 flex gap-3">
+        <input
+          type="search"
+          placeholder="Search..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full rounded-[12px] border border-line bg-surface-card px-3 py-2 text-sm text-text-1 focus:border-brand-teal focus:outline-none"
+        />
+        {visitedIds.size > 0 && <ResetListButton listId={listId} listSlug={listSlug} />}
+      </div>
+
+      <ul className="divide-y divide-[#F3F0E6] rounded-[16px] border border-line bg-surface-card">
         {filtered.map(({ item, progress }) => (
           // Keying on the progress row's own id (not just the item's) forces
           // a remount -- and a fresh local state -- whenever that row is
@@ -102,7 +107,7 @@ export default function ListItemsClient({
           />
         ))}
         {filtered.length === 0 && (
-          <li className="py-6 text-center text-sm text-zinc-500">No matches.</li>
+          <li className="py-6 text-center text-sm text-text-3">No matches.</li>
         )}
       </ul>
     </div>
