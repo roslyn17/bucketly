@@ -3,33 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import GoogleButton from "@/components/GoogleButton";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
-
-  async function handleGoogleSignup() {
-    setError(null);
-    setGoogleLoading(true);
-
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-
-    if (error) {
-      setError(error.message);
-      setGoogleLoading(false);
-    }
-    // On success, Supabase redirects the browser to Google, so there's
-    // nothing further to do here.
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,12 +60,6 @@ export default function SignupPage() {
         <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
           Sign up
         </h1>
-        <GoogleButton onClick={handleGoogleSignup} loading={googleLoading} label="Continue with Google" />
-        <div className="my-4 flex items-center gap-3 text-xs text-zinc-400">
-          <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-          or
-          <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-        </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
