@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAuthError } from "@/lib/authError";
 import type { DifficultyTier, List, Profile } from "@/lib/types";
 import { POINTS_BY_TIER } from "@/lib/difficulty";
 import { getLevelProgress } from "@/lib/level";
@@ -42,9 +43,16 @@ export default async function DashboardPage() {
 
   // A silently-swallowed error here (data null, coerced to []) is exactly
   // what previously made checked-off items appear to vanish after login --
-  // surface it as a real error instead of rendering a false "0".
+  // surface it as a real error instead of rendering a false "0". The one
+  // exception is a stale/invalid session token (getUser() above can return a
+  // user even when the token then fails verification on this DB round-trip)
+  // -- that's not a real data error, just an expired session, so send the
+  // user back to log in again instead of crashing with the raw error.
   const queryError = userListsError ?? itemsError ?? progressError ?? profileError ?? listTiersError;
-  if (queryError) throw queryError;
+  if (queryError) {
+    if (isAuthError(queryError)) redirect("/login");
+    throw queryError;
+  }
 
   const lists = (userListRows ?? []).map((row) => row.list);
   const stats = computeProfileStats(userListRows ?? [], items ?? [], progress ?? [], listTiers ?? []);
