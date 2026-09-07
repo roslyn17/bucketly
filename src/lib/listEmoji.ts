@@ -13,6 +13,7 @@ export const LIST_EMOJI: Record<string, string> = {
   "f1-circuits": "🏎️",
   "studio-ghibli-films": "🐉",
   "pixar-films": "💡",
+  "disney-parks": "🏰",
 };
 
 /** slug -> icon tile background tint, one of the tint colors from the brand
@@ -34,4 +35,5 @@ export const LIST_ICON_TINT: Record<string, string> = {
   "f1-circuits": "#FDECEA", // coral
   "studio-ghibli-films": "#EDEBFB", // indigo
   "pixar-films": "#FEF4D6", // yellow
+  "disney-parks": "#FDEEDC", // orange
 };
