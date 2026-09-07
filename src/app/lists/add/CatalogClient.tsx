@@ -60,10 +60,15 @@ export default function CatalogClient({
 
   return (
     <div>
-      <p className="mb-6 text-sm text-text-2">
+      {/* A <div>, not a <p> -- ScoringInfoModal's modal overlay (a <div> with
+          its own <p>/<ul> inside) always exists in the tree, just hidden
+          until opened, and a <p> can't legally contain block content like
+          that. It used to be a <p> here, which browsers silently "fixed" by
+          closing it early, causing a hydration mismatch. */}
+      <div className="mb-6 text-sm text-text-2">
         {totalCount} lists across {groups.length} categories. Harder lists are worth more per item —{" "}
         <ScoringInfoModal variant="link" />
-      </p>
+      </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
         <FilterPill active={filter === "all"} onClick={() => setFilter("all")} label={`All ${totalCount}`} />
