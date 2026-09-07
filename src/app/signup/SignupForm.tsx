@@ -26,6 +26,15 @@ export default function SignupForm() {
       return;
     }
 
+    // Supabase won't error on a duplicate email when "Confirm email" is on --
+    // it returns an obfuscated user instead, to avoid leaking which emails
+    // are registered. The tell is an empty `identities` array: a genuinely
+    // new signup always has one identity attached.
+    if (data.user && data.user.identities?.length === 0) {
+      setError("An account with this email already exists. Try logging in instead.");
+      return;
+    }
+
     // If email confirmation is required, Supabase returns a user but no
     // session yet -- there's nothing to log in to until they confirm.
     if (!data.session) {
@@ -57,7 +66,7 @@ export default function SignupForm() {
       <h1 className="mb-1 font-display text-2xl font-extrabold text-text-1">Create your account</h1>
       <p className="mb-6 text-sm text-text-2">Start checking things off today.</p>
 
-      <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+      <form onSubmit={handleSubmit} autoComplete="off" className="flex w-full flex-col gap-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-semibold text-text-2">
             Email
@@ -65,6 +74,7 @@ export default function SignupForm() {
           <input
             id="email"
             type="email"
+            autoComplete="off"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -78,12 +88,14 @@ export default function SignupForm() {
           <input
             id="password"
             type="password"
+            autoComplete="new-password"
             required
-            minLength={6}
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-[11px] border border-line bg-surface-card px-3 py-2 text-sm text-text-1 focus:border-brand-teal focus:outline-none"
           />
+          <p className="mt-1 text-xs text-text-2">At least 8 characters.</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
