@@ -37,7 +37,7 @@ export default function LoginForm() {
       <h1 className="mb-1 font-display text-2xl font-extrabold text-text-1">Welcome back</h1>
       <p className="mb-6 text-sm text-text-2">Log in to keep checking things off.</p>
 
-      <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+      <form onSubmit={handleSubmit} autoComplete="off" className="flex w-full flex-col gap-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-semibold text-text-2">
             Email
@@ -45,6 +45,7 @@ export default function LoginForm() {
           <input
             id="email"
             type="email"
+            autoComplete="off"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -58,6 +59,11 @@ export default function LoginForm() {
           <input
             id="password"
             type="password"
+            // Browsers (esp. Chrome) will otherwise auto-populate this field
+            // with a saved credential on page load, even right after
+            // signing out -- "new-password" is the one autocomplete value
+            // that reliably suppresses that, on a login field or not.
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}

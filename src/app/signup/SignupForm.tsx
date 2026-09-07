@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -85,16 +86,27 @@ export default function SignupForm() {
           <label htmlFor="password" className="mb-1 block text-sm font-semibold text-text-2">
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-[11px] border border-line bg-surface-card px-3 py-2 text-sm text-text-1 focus:border-brand-teal focus:outline-none"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-[11px] border border-line bg-surface-card px-3 py-2 pr-10 text-sm text-text-1 focus:border-brand-teal focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((shown) => !shown)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-text-2 hover:text-text-1"
+            >
+              <EyeIcon open={showPassword} />
+            </button>
+          </div>
           <p className="mt-1 text-xs text-text-2">At least 8 characters.</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -113,5 +125,35 @@ export default function SignupForm() {
         </Link>
       </p>
     </div>
+  );
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
