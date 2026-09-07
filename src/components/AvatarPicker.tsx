@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { updateAvatarUrl } from "@/lib/profileActions";
-import { PRESET_AVATARS } from "@/lib/presetAvatars";
 import ImageCropModal from "@/components/ImageCropModal";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -17,7 +16,6 @@ export default function AvatarPicker({
 }) {
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,20 +66,6 @@ export default function AvatarPicker({
     closeCropModal();
   }
 
-  async function handlePresetSelect(url: string) {
-    setError(null);
-    setBusy(true);
-    try {
-      await updateAvatarUrl(url);
-      setAvatarUrl(url);
-      setOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't update avatar. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="relative">
       <button
@@ -108,13 +92,12 @@ export default function AvatarPicker({
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute z-20 mt-2 w-72 rounded-[10px] border border-line bg-surface-card p-4 shadow-[var(--shadow-card-hover)]">
+          <div className="absolute z-20 mt-2 w-64 rounded-[10px] border border-line bg-surface-card p-4 shadow-[var(--shadow-card-hover)]">
             <p className="mb-2 text-xs font-bold tracking-wide text-text-3 uppercase">Upload a photo</p>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={busy}
-              className="mb-4 w-full rounded-[10px] border border-dashed border-line-strong px-3 py-2 text-sm text-text-2 hover:bg-surface-sunken disabled:opacity-50"
+              className="w-full rounded-[10px] border border-dashed border-line-strong px-3 py-2 text-sm text-text-2 hover:bg-surface-sunken"
             >
               Choose an image...
             </button>
@@ -125,22 +108,6 @@ export default function AvatarPicker({
               onChange={handleFileChange}
               className="hidden"
             />
-
-            <p className="mb-2 text-xs font-bold tracking-wide text-text-3 uppercase">Or pick one</p>
-            <div className="grid grid-cols-4 gap-2">
-              {PRESET_AVATARS.map((preset) => (
-                <button
-                  key={preset.url}
-                  type="button"
-                  onClick={() => handlePresetSelect(preset.url)}
-                  disabled={busy}
-                  title={preset.name}
-                  className="overflow-hidden rounded-full border border-line hover:border-line-strong disabled:opacity-50"
-                >
-                  <Image src={preset.url} alt={preset.name} width={48} height={48} />
-                </button>
-              ))}
-            </div>
 
             {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
           </div>
