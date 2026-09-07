@@ -20,7 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { DifficultyTier } from "@/lib/types";
 import DifficultyBadge from "@/components/DifficultyBadge";
-import ListIcon from "@/components/ListIcon";
+import { LIST_EMOJI } from "@/lib/listEmoji";
 import { removeList, reorderLists } from "@/lib/listActions";
 
 export type DashboardListCard = {
@@ -76,7 +76,6 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
     setOrderedIds(propIds);
   }
 
-  const [activeTab, setActiveTab] = useState<"in-progress" | "completed">("in-progress");
   const [, startTransition] = useTransition();
   const byId = new Map(lists.map((l) => [l.id, l]));
 
@@ -143,35 +142,17 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <h2 className="font-display text-xl font-extrabold text-text-1">Your bucket lists</h2>
-          <div className="flex gap-1 rounded-full bg-surface-sunken p-1 text-sm font-semibold">
-            <button
-              type="button"
-              onClick={() => setActiveTab("in-progress")}
-              className={`rounded-full px-3 py-1 transition-colors ${
-                activeTab === "in-progress" ? "bg-surface-card text-text-1 shadow-[var(--shadow-card)]" : "text-text-3"
-              }`}
-            >
-              In progress {inProgressIds.length}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("completed")}
-              className={`rounded-full px-3 py-1 transition-colors ${
-                activeTab === "completed" ? "bg-surface-card text-text-1 shadow-[var(--shadow-card)]" : "text-text-3"
-              }`}
-            >
-              Completed {completedIds.length}
-            </button>
-          </div>
-        </div>
+        <h2 className="font-display text-xl font-extrabold text-text-1">Your bucket lists</h2>
         {addButton}
       </div>
 
+      {/* Trying both groups on one page instead of behind an in-progress/
+          completed tab toggle -- easy to revert to tabs if this reads as too
+          long once someone has a lot of completed lists. */}
       <DndContext id="dashboard-lists" sensors={sensors} onDragEnd={handleDragEnd}>
+        <h3 className="mb-3 text-sm font-bold tracking-[.02em] text-text-2">In progress ({inProgressIds.length})</h3>
         <SortableContext items={inProgressIds} strategy={rectSortingStrategy}>
-          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${activeTab === "in-progress" ? "" : "hidden"}`}>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {inProgressIds.length === 0 ? (
               <p className="col-span-full text-sm text-text-3">
                 Nothing in progress -- everything you&apos;re tracking is done!
@@ -186,8 +167,9 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
           </div>
         </SortableContext>
 
+        <h3 className="mt-8 mb-3 text-sm font-bold tracking-[.02em] text-text-2">Completed ({completedIds.length})</h3>
         <SortableContext items={completedIds} strategy={rectSortingStrategy}>
-          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${activeTab === "completed" ? "" : "hidden"}`}>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {completedIds.length === 0 ? (
               <p className="col-span-full text-sm text-text-3">No completed lists yet -- keep checking things off!</p>
             ) : (
@@ -204,14 +186,18 @@ export default function SortableListGrid({ lists }: { lists: DashboardListCard[]
   );
 }
 
-function ProgressRing({ pct }: { pct: number }) {
+/** The ring shows a list's emoji rather than its raw percentage -- the
+ * fraction just underneath ("12 of 63 visited") already gives the precise
+ * count, so the ring's job is to be an at-a-glance identity + progress
+ * indicator, the same idea as the catalog's list tiles. */
+function ProgressRing({ pct, slug }: { pct: number; slug: string }) {
   return (
     <div
-      className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full"
+      className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full"
       style={{ background: `conic-gradient(var(--brand-teal) 0 ${pct}%, var(--surface-sunken) ${pct}% 100%)` }}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-card text-sm font-bold text-text-1">
-        {pct}%
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-card text-2xl">
+        {LIST_EMOJI[slug] ?? "📍"}
       </div>
     </div>
   );
@@ -246,7 +232,7 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex items-center gap-4 rounded-[16px] border p-[18px] transition-colors ${
+      className={`group relative rounded-[16px] border p-6 transition-colors ${
         completed
           ? "border-done-border bg-done-bg"
           : "border-line bg-surface-card hover:border-brand-teal hover:shadow-[var(--shadow-card-hover)]"
@@ -254,13 +240,16 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
     >
       {/* Drag listeners live only on this handle -- not the whole card --
           so clicking the card to open the list (or hitting Remove) isn't
-          fighting the sortable's pointer-down handling. */}
+          fighting the sortable's pointer-down handling. Both buttons sit
+          outside the Link below (siblings, not nested inside it) so they
+          stay independently clickable without needing to fight its
+          navigation via stopPropagation. */}
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label={`Drag ${list.name} to reorder`}
-        className="absolute top-3 right-3 cursor-grab touch-none rounded p-1 text-line-strong hover:text-brand-coral active:cursor-grabbing"
+        className="absolute top-3 right-3 z-10 cursor-grab touch-none rounded p-1 text-line-strong hover:text-brand-coral active:cursor-grabbing"
       >
         <GripIcon />
       </button>
@@ -270,40 +259,30 @@ function SortableListCard({ list }: { list: DashboardListCard }) {
         type="button"
         disabled={isPending}
         onClick={() => startTransition(() => removeList(list.id, list.slug))}
-        className="absolute top-9 right-3 text-[11px] text-text-3 opacity-0 underline transition-opacity hover:text-brand-coral disabled:opacity-50 group-hover:opacity-100"
+        className="absolute top-9 right-3 z-10 text-[11px] text-text-3 opacity-0 underline transition-opacity hover:text-brand-coral disabled:opacity-50 group-hover:opacity-100"
       >
         Remove
       </button>
 
-      <ProgressRing pct={list.pct} />
+      {/* The whole card is the way in now -- no separate "Continue"/"View"
+          link competing for attention; the hover border/shadow above is the
+          only affordance needed. */}
+      <Link href={`/lists/${list.slug}`} className="flex items-center gap-5">
+        <ProgressRing pct={list.pct} slug={list.slug} />
 
-      <div className="min-w-0 flex-1 pr-6">
-        <div className="mb-1 flex items-center gap-2">
-          <ListIcon slug={list.slug} size={28} />
-          <h3 className="truncate font-display text-base font-extrabold text-text-1">{list.name}</h3>
-          {completed && (
-            <span className="ml-auto shrink-0 rounded-full bg-done-bg px-2 py-0.5 text-[11px] font-bold text-brand-teal-ink">
-              ✓ Done
-            </span>
-          )}
+        <div className="min-w-0 flex-1 pr-6">
+          <h3 className="mb-1.5 truncate font-display text-lg font-extrabold text-text-1">{list.name}</h3>
+
+          <p className="mb-2.5 truncate text-sm text-text-2">
+            {list.visited} of {list.total} {list.actionVerb.toLowerCase()}
+          </p>
+
+          <div className="flex items-center justify-between gap-2">
+            <DifficultyBadge tier={list.difficultyTier} pointsPerItem={list.pointsPerItem} />
+            <span className="shrink-0 text-sm font-bold text-text-1">{list.visited * list.pointsPerItem} pts</span>
+          </div>
         </div>
-
-        <p className="mb-2 truncate text-sm text-text-2">
-          {list.visited} of {list.total} {list.actionVerb.toLowerCase()} ·{" "}
-          <span className="font-semibold text-[#8A6A11]">{list.visited * list.pointsPerItem} pts</span>
-        </p>
-
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <DifficultyBadge tier={list.difficultyTier} />
-          <span className="text-xs text-text-3">{list.pointsPerItem} pts / item</span>
-          <Link
-            href={`/lists/${list.slug}`}
-            className="ml-auto shrink-0 text-xs font-semibold text-brand-teal-ink hover:underline"
-          >
-            Continue →
-          </Link>
-        </div>
-      </div>
+      </Link>
     </div>
   );
 }

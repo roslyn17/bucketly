@@ -7,8 +7,12 @@ import { generateProfileSnapshot } from "@/lib/shareSnapshot";
 /** The "Make my profile public" toggle and the "Share" snapshot button,
  * combined into one component (they live right next to each other, and the
  * Share button needs to know the toggle's current state -- including a
- * toggle flipped this render, before any server revalidation lands). */
+ * toggle flipped this render, before any server revalidation lands).
+ * `tone` picks the outer control colors for whichever card it's dropped
+ * into -- the share preview popup itself is always a white overlay
+ * regardless, same as ScoringInfoModal's panel. */
 export default function ProfileSharingControls({
+  tone = "dark",
   initialIsPublic,
   displayName,
   avatarUrl,
@@ -17,6 +21,7 @@ export default function ProfileSharingControls({
   totalVisited,
   totalListsTracked,
 }: {
+  tone?: "light" | "dark";
   initialIsPublic: boolean;
   /** The raw stored display_name -- null if never set. This doubles as the
    * public URL's handle, so sharing/going public both require it. */
@@ -27,6 +32,7 @@ export default function ProfileSharingControls({
   totalVisited: number;
   totalListsTracked: number;
 }) {
+  const isDark = tone === "dark";
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [pending, startTransition] = useTransition();
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -154,7 +160,7 @@ export default function ProfileSharingControls({
   }
 
   return (
-    <div className="mt-4 flex flex-col items-start gap-2">
+    <div className="flex flex-col items-start gap-2">
       <div className="flex flex-wrap items-center gap-4">
         <label className="flex items-center gap-2">
           <button
@@ -164,7 +170,7 @@ export default function ProfileSharingControls({
             onClick={handleToggle}
             disabled={pending}
             className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
-              isPublic ? "bg-brand-teal" : "bg-brand-navy-3"
+              isPublic ? "bg-brand-teal" : isDark ? "bg-brand-navy-3" : "bg-surface-sunken"
             }`}
           >
             <span
@@ -173,20 +179,26 @@ export default function ProfileSharingControls({
               }`}
             />
           </button>
-          <span className="text-sm text-brand-navy-ink">Make my profile public</span>
+          <span className={`text-sm ${isDark ? "text-brand-navy-ink" : "text-text-2"}`}>
+            Make my profile public
+          </span>
         </label>
         <button
           type="button"
           onClick={handleShare}
           disabled={sharing}
-          className="rounded-[10px] border border-brand-navy-3 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-2 disabled:opacity-50"
+          className={`rounded-[10px] border px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${
+            isDark
+              ? "border-brand-navy-3 text-white hover:bg-brand-navy-2"
+              : "border-line-strong text-text-2 hover:bg-surface-sunken"
+          }`}
         >
           {sharing ? "Generating..." : "Share"}
         </button>
       </div>
 
-      {toggleError && <p className="text-xs text-red-300">{toggleError}</p>}
-      {shareError && <p className="text-xs text-red-300">{shareError}</p>}
+      {toggleError && <p className={`text-xs ${isDark ? "text-red-300" : "text-red-600"}`}>{toggleError}</p>}
+      {shareError && <p className={`text-xs ${isDark ? "text-red-300" : "text-red-600"}`}>{shareError}</p>}
 
       {preview && (
         <div

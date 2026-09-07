@@ -8,7 +8,9 @@ const MAX_LENGTH = 40;
 /** Shows the user's display name with a hover-revealed "Edit" control that
  * swaps in a text input. Saving an empty value clears the name, falling
  * back to `fallbackName` (the local part of their email) elsewhere. Styled
- * for the navy progress band -- it's the only place this renders. */
+ * as a small muted label -- it's the header line above the big points
+ * number, not the focal point of the navy progress band, so it stays
+ * deliberately understated. It's the only place this renders. */
 export default function DisplayNameEditor({
   initialName,
   fallbackName,
@@ -57,7 +59,7 @@ export default function DisplayNameEditor({
           maxLength={MAX_LENGTH}
           autoFocus
           disabled={busy}
-          className="font-display rounded-md border border-brand-navy-3 bg-brand-navy-2 px-2 py-1 text-2xl font-extrabold text-white placeholder:text-brand-navy-ink focus:border-brand-teal focus:outline-none disabled:opacity-50"
+          className="rounded-md border border-brand-navy-3 bg-brand-navy-2 px-2 py-1 text-sm font-semibold text-white placeholder:text-brand-navy-ink focus:border-brand-teal focus:outline-none disabled:opacity-50"
         />
         <div className="flex items-center gap-3">
           <button
@@ -84,11 +86,11 @@ export default function DisplayNameEditor({
 
   return (
     <div className="group flex items-center gap-2">
-      <h1 className="font-display text-2xl font-extrabold text-white">{name || fallbackName}</h1>
+      <p className="text-sm font-semibold tracking-[.01em] text-brand-navy-ink">{name || fallbackName}</p>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="text-xs text-brand-navy-ink underline opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+        className="text-[11px] text-brand-navy-ink underline opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
       >
         Edit
       </button>

@@ -9,8 +9,12 @@ import AvatarPicker from "@/components/AvatarPicker";
 import DisplayNameEditor from "@/components/DisplayNameEditor";
 import ScoringInfoModal from "@/components/ScoringInfoModal";
 import ProfileSharingControls from "@/components/ProfileSharingControls";
-import TierLadder from "@/components/TierLadder";
 import SortableListGrid, { type DashboardListCard } from "@/components/SortableListGrid";
+
+// Circumference of the avatar's progress ring (r=44, see the SVG below) --
+// stroke-dashoffset is circumference * (1 - pct/100) to sweep it clockwise
+// from empty to full as progressPct climbs.
+const AVATAR_RING_CIRCUMFERENCE = 2 * Math.PI * 44;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -76,22 +80,49 @@ export default async function DashboardPage() {
       <div className="mb-6 rounded-[18px] bg-brand-navy p-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4 sm:min-w-0 sm:flex-1">
-            <AvatarPicker initialAvatarUrl={(profile as Profile | null)?.avatar_url ?? null} />
+            {/* A ring around the avatar echoing the same progressPct as the
+                bar below -- a glanceable "how close to leveling up" cue
+                that doesn't cost any extra layout space. */}
+            <div className="relative h-[92px] w-[92px] shrink-0">
+              <svg width="92" height="92" viewBox="0 0 92 92" className="absolute inset-0 -rotate-90">
+                <circle cx="46" cy="46" r="44" fill="none" stroke="var(--brand-navy-3)" strokeWidth="4" />
+                <circle
+                  cx="46"
+                  cy="46"
+                  r="44"
+                  fill="none"
+                  stroke="var(--brand-teal)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={AVATAR_RING_CIRCUMFERENCE}
+                  strokeDashoffset={AVATAR_RING_CIRCUMFERENCE * (1 - progressPct / 100)}
+                />
+              </svg>
+              <div className="absolute inset-2">
+                <AvatarPicker initialAvatarUrl={(profile as Profile | null)?.avatar_url ?? null} />
+              </div>
+            </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <DisplayNameEditor
-                  initialName={(profile as Profile | null)?.display_name ?? null}
-                  fallbackName={user.email?.split("@")[0] || "Explorer"}
-                />
-                <span className="rounded-full bg-brand-yellow px-3 py-1 text-xs font-bold tracking-[.04em] text-brand-navy uppercase">
+              <DisplayNameEditor
+                initialName={(profile as Profile | null)?.display_name ?? null}
+                fallbackName={user.email?.split("@")[0] || "Explorer"}
+              />
+
+              <p className="font-display mt-1 mb-3 text-3xl font-extrabold text-brand-yellow">
+                {stats.totalPoints} pts
+              </p>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-brand-coral">
                   {level.name}
+                  <ScoringInfoModal tone="dark" />
                 </span>
-                <ScoringInfoModal tone="dark" />
+                {nextLevel && <span className="text-xs text-brand-navy-ink">{nextLevel.name}</span>}
               </div>
 
-              <div className="mt-3 max-w-md">
-                <div className="h-[11px] w-full overflow-hidden rounded-full bg-brand-navy-3">
+              <div className="mt-2 max-w-md">
+                <div className="h-[6px] w-full overflow-hidden rounded-full bg-brand-navy-3">
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -100,33 +131,17 @@ export default async function DashboardPage() {
                     }}
                   />
                 </div>
-                <div className="mt-1.5 flex items-center justify-between text-xs text-brand-navy-ink">
-                  <span>{stats.totalPoints} pts</span>
+                <p className="mt-2 text-xs text-brand-navy-ink">
                   {nextLevel ? (
                     <>
-                      <span>
-                        <span className="font-bold text-brand-yellow">
-                          {pointsToNext} more
-                        </span>{" "}
-                        to {nextLevel.name}
-                      </span>
-                      <span>{nextLevel.minPoints} pts</span>
+                      <span className="font-semibold text-white/80">{pointsToNext} more</span> to reach{" "}
+                      {nextLevel.name}
                     </>
                   ) : (
                     <span className="font-bold text-brand-yellow">Max level reached! 🏆</span>
                   )}
-                </div>
+                </p>
               </div>
-
-              <ProfileSharingControls
-                initialIsPublic={(profile as Profile | null)?.is_public ?? false}
-                displayName={(profile as Profile | null)?.display_name ?? null}
-                avatarUrl={(profile as Profile | null)?.avatar_url ?? null}
-                levelName={level.name}
-                totalPoints={stats.totalPoints}
-                totalVisited={stats.totalVisited}
-                totalListsTracked={lists.length}
-              />
             </div>
           </div>
 
@@ -138,8 +153,21 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="mb-6">
-        <TierLadder currentLevelName={level.name} />
+      <div className="mb-6 flex flex-col gap-4 rounded-[16px] border border-line bg-surface-card p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-bold text-text-1">Share your progress</p>
+          <p className="text-xs text-text-3">Post a card, or make your profile public with a shareable link.</p>
+        </div>
+        <ProfileSharingControls
+          tone="light"
+          initialIsPublic={(profile as Profile | null)?.is_public ?? false}
+          displayName={(profile as Profile | null)?.display_name ?? null}
+          avatarUrl={(profile as Profile | null)?.avatar_url ?? null}
+          levelName={level.name}
+          totalPoints={stats.totalPoints}
+          totalVisited={stats.totalVisited}
+          totalListsTracked={lists.length}
+        />
       </div>
 
       <SortableListGrid
